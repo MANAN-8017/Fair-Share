@@ -366,7 +366,6 @@ Create a `.env` file in the project root:
 
 ```env
 API_BASE_URL=http://10.0.2.2:8000/api
-
 ```
 
 For an Android emulator, `10.0.2.2` can be used to access the development machine's localhost.
