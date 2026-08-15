@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/data.dart';
+import '../data/retriever.dart';
 import '../routes/routes.dart';
 import '../services/services.dart';
 import '../widgets/widgets.dart';
@@ -14,13 +14,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 
-  bool isLoading = false;
-  String name = mockUsers[0]['name'] as String;
   final AuthService authService = AuthService();
+  final Retriever retriever = Retriever();
+
+  String greeting = "Good evening";
+  String? name = "User";
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
+
+    setGreeting();
+    loadUser();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.successMessage != null) {
@@ -29,7 +35,33 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void logout() {
+  void setGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour >= 5 && hour < 12) {
+      greeting = "Good morning";
+    } else if (hour >= 12 && hour < 17) {
+      greeting = "Good afternoon";
+    } else if (hour >= 17 && hour < 21) {
+      greeting = "Good evening";
+    } else {
+      greeting = "Good night";
+    }
+  }
+
+  Future<void> loadUser() async {
+    final userName = await retriever.getName();
+
+    if (!mounted) return;
+
+    setState(() {
+      if (userName != null && userName.isNotEmpty) {
+        name = userName;
+      }
+    });
+  }
+
+  Future<void> logout() async {
     authService.logout();
     setState(() {
       isLoading = true;
@@ -53,33 +85,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Top section
                     Padding(
                       padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child:
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "GOOD EVENING",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  letterSpacing: 1.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1B5C53),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  greeting.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    letterSpacing: 1.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1B5C53),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Hi, $name",
-                                style: const TextStyle(
-                                  fontSize: 21,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF17202B),
+
+                                const SizedBox(height: 4),
+
+                                Text(
+                                  "Hi, $name",
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF17202B),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+
+                          const SizedBox(width: 12),
 
                           // Profile
                           Container(
@@ -94,17 +134,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             ),
-                            child:
-                            PopupMenuButton<String>(
+                            child: PopupMenuButton<String>(
                               offset: const Offset(0, 2),
                               position: PopupMenuPosition.under,
                               onSelected: (value) {
                                 if (value == 'logout') {
-                                  () => AppRouter.toLogin(context);
+                                  logout();
                                 }
                               },
-                              itemBuilder: (context) =>
-                              const [
+                              itemBuilder: (context) => const [
                                 PopupMenuItem<String>(
                                   value: 'logout',
                                   child: Text("Logout"),
@@ -117,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ],
-                      ),
+                      )
                     ),
 
                     // Balance card

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'auth.dart';
 import '../../routes/routes.dart';
 import '../../services/services.dart';
 import '../../widgets/widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  final VoidCallback? onBack;
+  const RegisterScreen({super.key, this.onBack});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -13,41 +13,61 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
 
-  final TextEditingController usernameController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
   bool isLoading = false;
+  bool obscurePassword = true;
+  bool obscureConfirmPassword = true;
 
   final AuthService authService = AuthService();
 
-  void register() {
-    String username = usernameController.text.trim();
+  Future<void> register() async {
     String name = nameController.text.trim();
     String email = emailController.text.trim();
+    String phoneNumber = phoneNumberController.text.trim();
     String password = passwordController.text.trim();
     String confirmPassword = confirmPasswordController.text.trim();
 
-    String? error = authService.register(username, name, email, password, confirmPassword);
+    setState(() {
+      isLoading = true;
+    });
 
-    if (error == null) {
+    final response = await authService.register(
+      name,
+      email,
+      phoneNumber,
+      password,
+      confirmPassword,
+    );
+
+    if (!mounted) return;
+
+    if (response == "True") {
+      AppRouter.toLogin(
+        context,
+        successMessage: "Account created successfully.",
+      );
+    } else {
       setState(() {
-        isLoading = true;
+        isLoading = false;
       });
 
-      NavigationService.navigateAfterDelay( context, const LoginScreen(successMessage: "Account created successfully.",), 2);
-    } else {
-      AppSnackBar.error(context, error);
+      AppSnackBar.error(
+        context,
+        response.toString(),
+      );
     }
   }
 
   @override
   void dispose() {
-    usernameController.dispose();
     nameController.dispose();
     emailController.dispose();
+    phoneNumberController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
@@ -69,15 +89,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Back
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: () => AppRouter.toAuthOption(context),
-                    child: const Text(
-                      "← Back",
-                      style: TextStyle(
-                        color: Color(0xFF17202B),
-                        fontSize: 16,
-                      ),
+                  child: IconButton(
+                    onPressed: () {
+                      AppRouter.toAuthOption(context);
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 22,
+                      color: Color(0xFF17202B),
                     ),
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                    tooltip: "Back",
                   ),
                 ),
 
@@ -130,30 +153,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 12),
 
-                // Username
-                TextFormField(
-                  controller: usernameController,
-                  decoration: InputDecoration(
-                    hintText: "Username",
-                    filled: true,
-                    fillColor: const Color(0xFFF1EEE5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE4E0D5),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE4E0D5),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
                 // Email
                 TextFormField(
                   controller: emailController,
@@ -179,13 +178,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 12),
 
+                // Phone number
+                TextFormField(
+                  controller: phoneNumberController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: "Phone Number",
+                    filled: true,
+                    fillColor: const Color(0xFFF1EEE5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE4E0D5),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE4E0D5),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
                 // Password
                 TextFormField(
                   controller: passwordController,
-                  obscureText: true,
+                  obscureText: obscurePassword,
                   decoration: InputDecoration(
                     hintText: "Create password",
-                    suffixIcon: const Icon(Icons.visibility_off_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          obscurePassword = !obscurePassword;
+                        });
+                      },
+                    ),
                     filled: true,
                     fillColor: const Color(0xFFF1EEE5),
                     border: OutlineInputBorder(
@@ -208,10 +243,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Confirm Password
                 TextFormField(
                   controller: confirmPasswordController,
-                  obscureText: true,
+                  obscureText: obscureConfirmPassword,
                   decoration: InputDecoration(
                     hintText: "Confirm password",
-                    suffixIcon: const Icon(Icons.visibility_off_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscureConfirmPassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          obscureConfirmPassword = !obscureConfirmPassword;
+                        });
+                      },
+                    ),
                     filled: true,
                     fillColor: const Color(0xFFF1EEE5),
                     border: OutlineInputBorder(

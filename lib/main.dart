@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'screens/auth/loading_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
-  runApp(const FairShareApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Supabase.initialize(
+      url: 'https://ufyqhxgfvxfyqgifednn.supabase.co',
+      anonKey: 'sb_publishable_-Z7aiYb9fabdcweG_dRhrw_6lDPh39Q',
+    );
+    runApp(const FairShareApp());
+  }
+  catch(error){
+    print("Error: $error");
+  }
 }
 
 class FairShareApp extends StatelessWidget {

@@ -1,4 +1,3 @@
-import 'package:fair_share/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
@@ -22,21 +21,24 @@ class AppRouter {
       BuildContext context, {
         int delay = 0,
       }) {
-    return NavigationService.navigateAfterDelay(
+    return NavigationService.clearAndNavigate(
       context,
       const AuthOptionScreen(),
-      delay,
+      delay: delay,
     );
   }
 
   static Future<void> toLogin(
       BuildContext context, {
         int delay = 0,
+        String? successMessage,
       }) {
-    return NavigationService.navigateAfterDelay(
+    return NavigationService.replace(
       context,
-      const LoginScreen(),
-      delay,
+      LoginScreen(
+        successMessage: successMessage,
+      ),
+      delay: delay,
     );
   }
 
@@ -44,10 +46,10 @@ class AppRouter {
       BuildContext context, {
         int delay = 0,
       }) {
-    return NavigationService.navigateAfterDelay(
+    return NavigationService.replace(
       context,
       const RegisterScreen(),
-      delay,
+      delay: delay,
     );
   }
 
@@ -55,10 +57,10 @@ class AppRouter {
       BuildContext context, {
         int delay = 0,
       }) {
-    return NavigationService.navigateAfterDelay(
+    return NavigationService.clearAndNavigate(
       context,
       const HomeScreen(),
-      delay,
+      delay: delay,
     );
   }
 }

@@ -1,4 +1,6 @@
+import 'package:fair_share/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import '../../services/services.dart';
 import '../../routes/routes.dart';
 import '../../widgets/widgets.dart';
 
@@ -11,10 +13,26 @@ class LoadingScreen extends StatefulWidget {
 
 class _LoadingScreenState extends State<LoadingScreen>{
 
+  AuthService authService = AuthService();
   @override
   void initState() {
     super.initState();
-    AppRouter.toAuthOption(context, delay: 3);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (authService.isLoggedIn) {
+        AppRouter.toHome(
+          context,
+          delay: 2,
+        );
+      } else {
+        AppRouter.toAuthOption(
+          context,
+          delay: 2,
+        );
+      }
+    });
   }
 
   @override

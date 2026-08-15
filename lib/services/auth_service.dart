@@ -1,70 +1,166 @@
-import '../../data/mock_data.dart';
+import 'validation_services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
+  final SupabaseClient supabase = Supabase.instance.client;
+  bool get isLoggedIn => supabase.auth.currentSession != null;
+
   AuthService._internal();
+
   static final AuthService _instance = AuthService._internal();
+
   factory AuthService() {
     return _instance;
   }
 
-  bool isLoggedIn = false;
-  int id = 4;
+  Future<String?> login(String identifier, String password) async {
+    try {
+      final emailPattern = RegExp(
+        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+      );
 
-  bool isValidGmail(String email) {
-    final pattern = RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$');
-    return pattern.hasMatch(email);
-  }
+      // EMAIL LOGIN
+      if (emailPattern.hasMatch(identifier)) {
+        final valid = validateLogin(
+          identifier,
+          password,
+          1,
+        );
 
-  bool isValidName(String name){
-    final pattern = RegExp(r'^[a-zA-Z]');
-    return pattern.hasMatch(name);
-  }
+        if (valid != null) {
+          return valid;
+        }
 
-  bool isValidPassword(String password){
-    if(password.length < 4){
-      return false;
-    }
-    return true;
-  }
+        await supabase.auth.signInWithPassword(
+          email: identifier,
+          password: password,
+        );
 
-  String? login(String email, String password) {
-    if (!isValidGmail(email)) {
-      return "Please enter a valid Gmail address.";
-    }
-
-    for (int i = 0; i < mockUsers.length; i++) {
-      if ((mockUsers[i]['email'] as String).toLowerCase() == email.toLowerCase() &&
-          (mockUsers[i]['password'] as String) == password) {
-        isLoggedIn = true;
-        return null;
+        return "True";
       }
-    }
 
-    return "Invalid email or password.";
+      // PHONE LOGIN
+      final valid = validateLogin(
+        identifier,
+        password,
+        0,
+      );
+
+      if (valid != null) {
+        return valid;
+      }
+
+      final phoneNumber = "+91$identifier";
+
+      final userData = await supabase
+          .from('users')
+          .select('email')
+          .eq('phone_number', phoneNumber)
+          .maybeSingle();
+
+      if (userData == null) {
+        return "No account found with this phone number.";
+      }
+
+      final email = userData['email'] as String;
+
+      await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      return "True";
+    } catch (error) {
+      return error.toString();
+    }
   }
 
-  String? register(String username, String name, String email, String password, String confirmPassword) {
-    if (!isValidGmail(email)) {
-      return "Please enter a valid Gmail address.";
+  Future<String?> register(
+      String name,
+      String email,
+      String phoneNumber,
+      String password,
+      String confirmPassword,
+      ) async {
+    final valid = validateRegistration(
+      name,
+      email,
+      phoneNumber,
+      password,
+      confirmPassword,
+    );
+
+    if (valid != null) {
+      return valid;
     }
 
-    if (!isValidName(name)) {
-      return "Please enter a valid Name.";
-    }
+    try {
+      phoneNumber = "+91$phoneNumber";
 
-    if(!isValidPassword(password)){
-      return "Password must be at least 4 characters.";
-    }
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
 
-    if (password != confirmPassword){
-      return "Passwords do not match.";
-    }
+      final user = response.user;
 
-    mockUsers.add({'username': username, 'name': name, 'email': email, 'password': password});
-    return null;
+      if (user == null) {
+        return "Try Again";
+      }
+
+      await supabase.from('users').insert({
+        'id': user.id,
+        'name': name,
+        'email': email,
+        'phone_number': phoneNumber,
+      });
+
+      return "True";
+    } catch (error) {
+      return error.toString();
+    }
   }
-  bool logout() {
-    isLoggedIn = false;
-    return true;
+
+  Future<void> logout() async {
+    await supabase.auth.signOut();
   }
+}
+
+String? validateRegistration(String name, String email, String phoneNumber, String password, String confirmPassword) {
+  return ValidationService.validate(
+    name,
+    type: ValidationType.name,
+  ) ??
+      ValidationService.validate(
+        email,
+        type: ValidationType.email,
+      ) ??
+      ValidationService.validate(
+        phoneNumber,
+        type: ValidationType.phone,
+      ) ??
+      ValidationService.validate(
+        password,
+        type: ValidationType.password,
+        minLength: 8,
+      ) ??
+      ValidationService.validate(
+        confirmPassword,
+        type: ValidationType.confirmPassword,
+        compareValue: password,
+      );
+}
+
+String? validateLogin(String identifier, String password, int x){
+  if(x == 1) {
+    return
+      ValidationService.validate(identifier, type: ValidationType.email)
+          ??
+          ValidationService.validate(password, type: ValidationType.password);
+  }
+
+  return
+    ValidationService.validate(identifier, type: ValidationType.phone)
+        ??
+        ValidationService.validate(password, type: ValidationType.password);
 }

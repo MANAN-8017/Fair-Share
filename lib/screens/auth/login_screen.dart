@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import '../home_screen.dart';
 import '../../routes/routes.dart';
 import '../../services/services.dart';
 import '../../widgets/widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? successMessage;
-  const LoginScreen({super.key, this.successMessage,});
+  final VoidCallback? onBack;
+  const LoginScreen({super.key, this.successMessage, this.onBack});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -14,9 +14,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
 
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController identifierController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
+  bool loginWithPhone = false;
+  bool obscurePassword = true;
+  bool obscureConfirmPassword = true;
 
   final AuthService authService = AuthService();
 
@@ -31,30 +34,32 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  void login() {
-    String email = emailController.text.trim();
+  Future<void> login() async {
+    String identifier = identifierController.text.trim();
     String password = passwordController.text.trim();
 
-    AuthService authService = AuthService();
-    String? error = authService.login(email, password);
+    setState(() {
+      isLoading = true;
+    });
 
-    if (error == null) {
+    String? response = await authService.login(identifier, password,);
+
+    if (!mounted) return;
+
+    if (response == "True") {
+      AppRouter.toHome(context, delay: 2);
+    }
+    else {
       setState(() {
-        isLoading = true;
+        isLoading = false;
       });
-      NavigationService.navigateAfterDelay( context, const HomeScreen(successMessage: "Logged in successfully."), 2);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error)
-        ),
-      );
+      AppSnackBar.error(context, response.toString());
     }
   }
 
   @override
   void dispose() {
-    emailController.dispose();
+    identifierController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -75,15 +80,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Back
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: () => AppRouter.toAuthOption(context),
-                    child: const Text(
-                      "← Back",
-                      style: TextStyle(
-                        color: Color(0xFF17202B),
-                        fontSize: 16,
-                      ),
+                  child: IconButton(
+                    onPressed: () {
+                      if (widget.onBack != null) {
+                        widget.onBack!();
+                      } else {
+                        AppRouter.toAuthOption(context);
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 22,
+                      color: Color(0xFF17202B),
                     ),
+                    padding: EdgeInsets.zero,
+                    alignment: Alignment.centerLeft,
+                    tooltip: "Back",
                   ),
                 ),
 
@@ -112,55 +124,157 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                // Email
-                TextFormField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: "Enter your email",
-                    filled: true,
-                    fillColor: const Color(0xFFF1EEE5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE4E0D5),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE4E0D5),
-                      ),
-                    ),
-                  ),
-                ),
 
                 const SizedBox(height: 12),
 
-                // Password
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    hintText: "Enter your password",
-                    filled: true,
-                    fillColor: const Color(0xFFF1EEE5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE4E0D5),
-                      ),
+                // Login method toggle
+                Container(
+                  height: 46,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1EEE5),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFE4E0D5),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE4E0D5),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              loginWithPhone = false;
+                              identifierController.clear();
+                            });
+                          },
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: !loginWithPhone
+                                  ? const Color(0xFF17202B)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: Text(
+                              "Email",
+                              style: TextStyle(
+                                color: !loginWithPhone
+                                    ? Colors.white
+                                    : const Color(0xFF5A6472),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              loginWithPhone = true;
+                              identifierController.clear();
+                            });
+                          },
+                          child: Container(
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: loginWithPhone
+                                  ? const Color(0xFF17202B)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: Text(
+                              "Phone",
+                              style: TextStyle(
+                                color: loginWithPhone
+                                    ? Colors.white
+                                    : const Color(0xFF5A6472),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                // Email / Phone field
+                KeyedSubtree(
+                  key: ValueKey(loginWithPhone),
+                  child: TextFormField(
+                    controller: identifierController,
+                    keyboardType: loginWithPhone
+                        ? TextInputType.phone
+                        : TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      hintText: loginWithPhone
+                          ? "Enter your phone number"
+                          : "Enter your email",
+                      prefixIcon: Icon(
+                        loginWithPhone
+                            ? Icons.phone_outlined
+                            : Icons.email_outlined,
+                        color: const Color(0xFF5A6472),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFFF1EEE5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE4E0D5),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFE4E0D5),
+                        ),
                       ),
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 8),
+
+                // Password
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: "Enter Password",
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          obscurePassword = !obscurePassword;
+                        });
+                      },
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF1EEE5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE4E0D5),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE4E0D5),
+                      ),
+                    ),
+                  ),
+                ),
 
                 Align(
                   alignment: Alignment.centerRight,

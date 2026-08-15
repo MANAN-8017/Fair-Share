@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppSnackBar {
-  static void success(
-      BuildContext context,
-      String message,
-      ) {
+  static void success(BuildContext context, String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -38,10 +35,7 @@ class AppSnackBar {
     );
   }
 
-  static void error(
-      BuildContext context,
-      String message,
-      ) {
+  static void error(BuildContext context, String message) {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
     ScaffoldMessenger.of(context).showSnackBar(
