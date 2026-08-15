@@ -1,23 +1,26 @@
 import 'package:flutter/material.dart';
 
 class NavigationService {
-  static void navigateAfterDelay(
+
+  static Future<void> navigateAfterDelay(
       BuildContext context,
       Widget screen,
-      int time
-      ) {
-    Future.delayed(
-      Duration(seconds: time),
-          () {
-        if (!context.mounted) return;
+      int delay,
+      ) async {
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => screen,
-          ),
-        );
-      },
+    if (delay > 0) {
+      await Future.delayed(
+        Duration(seconds: delay),
+      );
+    }
+
+    if (!context.mounted) return;
+
+    await Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => screen,
+      ),
     );
   }
 }
