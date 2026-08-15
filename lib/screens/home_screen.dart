@@ -1,34 +1,40 @@
-import 'package:fair_share/screens/auth/auth_option.dart';
-import 'package:fair_share/screens/auth/login_screen.dart';
 import 'package:flutter/material.dart';
-import '../data/mock_data.dart';
-import 'package:fair_share/services/auth_service.dart';
-import '../services/navigation_service.dart';
-import './auth/loading_screen.dart';
+import '../data/data.dart';
+import '../routes/routes.dart';
+import '../services/services.dart';
+import '../widgets/widgets.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String? successMessage;
+  const HomeScreen({super.key, this.successMessage});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isCircle = false;
 
+  bool isLoading = false;
   String name = mockUsers[0]['name'] as String;
-  AuthService authService = AuthService();
+  final AuthService authService = AuthService();
+
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.successMessage != null) {
+        AppSnackBar.success(context, widget.successMessage!);
+      }
+    });
   }
 
-  void logoutRouter(){
+  void logout() {
     authService.logout();
     setState(() {
-      isCircle = true;
+      isLoading = true;
     });
-    NavigationService.navigateAfterDelay(context, const LoginScreen(), 0);
+    AppRouter.toLogin(context, delay: 2);
   }
 
   @override
@@ -38,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-
             // Everything above bottom navigation
             Expanded(
               child: SingleChildScrollView(
@@ -89,15 +94,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                             ),
-                            child: PopupMenuButton<String>(
-                              offset: const Offset(0, 45),
+                            child:
+                            PopupMenuButton<String>(
+                              offset: const Offset(0, 2),
+                              position: PopupMenuPosition.under,
                               onSelected: (value) {
                                 if (value == 'logout') {
-                                  logoutRouter();
+                                  () => AppRouter.toLogin(context);
                                 }
                               },
-                              itemBuilder: (context) => const [
-                                PopupMenuItem(
+                              itemBuilder: (context) =>
+                              const [
+                                PopupMenuItem<String>(
                                   value: 'logout',
                                   child: Text("Logout"),
                                 ),
@@ -149,18 +157,20 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _balancePill(
-                                  "YOU OWE",
-                                  "\$38.00",
-                                  const Color(0xFFFF9686),
+                                child:
+                                BalancePill(
+                                  label: "YOU OWE",
+                                  value: "\$38.00",
+                                  valueColor: const Color(0xFFFF9686),
                                 ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: _balancePill(
-                                  "YOU'RE OWED",
-                                  "\$180.50",
-                                  const Color(0xFF7FE0CC),
+                                child:
+                                BalancePill(
+                                  label: "YOU'RE OWED",
+                                  value: "\$180.50",
+                                  valueColor: const Color(0xFF7FE0CC),
                                 ),
                               ),
                             ],
@@ -194,18 +204,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 22),
                         scrollDirection: Axis.horizontal,
                         children: [
-                          _groupCard(
-                            "?",
-                            "Flatmates",
-                            "+\$64.00",
-                            const Color(0xFF2F9E8F),
+                          GroupCard(
+                            icon: "?",
+                            groupName: "Flatmates",
+                            amount: "+\$64.00",
+                            iconColor: const Color(0xFF2F9E8F),
                           ),
                           const SizedBox(width: 12),
-                          _groupCard(
-                            "?",
-                            "Goa Trip",
-                            "-\$22.00",
-                            const Color(0xFFFF6452),
+                          GroupCard(
+                            icon: "?",
+                            groupName: "Goa Trip",
+                            amount: "+\$22.00",
+                            iconColor: const Color(0xFFFF6452),
                           ),
                         ],
                       ),
@@ -231,23 +241,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     const SizedBox(height: 10),
-
-                    _activityRow(
-                      "??",
-                      "Dinner at Otto's",
-                      "Priya paid · Flatmates",
-                      "+\$24.50",
-                      const Color(0xFF1B5C53),
-                    ),
-
-                    _activityRow(
-                      "?",
-                      "Airport cab",
-                      "You paid · Goa Trip",
-                      "-\$14.00",
-                      const Color(0xFFE3492F),
-                    ),
-
+                    ActivityRow(icon: "??", title: "Dinner at Otto's", subtitle: "Priya paid → Flatmates", amount: "+\$24.50", iconColor: const Color(0xFF1B5C53)),
+                    ActivityRow(icon: "?", title: "Airport cab", subtitle: "You paid · Goa Trip", amount: "+\$14.00", iconColor: const Color(0xFFE3492F)),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -267,230 +262,23 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _NavItem(Icons.home_outlined, "Home", true),
-                  _NavItem(Icons.people_outline, "Groups", false),
-                  _NavItem(Icons.add, "Add", false),
-                  _NavItem(Icons.person_outline, "Account", false),
+                  NavItem(Icons.home_outlined, "Home", true),
+                  NavItem(Icons.people_outline, "Groups", false),
+                  NavItem(Icons.add, "Add", false),
+                  NavItem(Icons.person_outline, "Account", false),
                 ],
               ),
             ),
+            if (isLoading)
+              Container(
+                color: const Color(0xFFFAF8F3),
+                child: const Center(
+                  child: LoadingDots(color: Color(0xFFFF6452), size: 8, spacing: 8,),
+                ),
+              ),
           ],
         ),
       ),
-    );
-  }
-  Widget _balancePill(
-      String label,
-      String value,
-      Color valueColor,
-      ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              letterSpacing: 0.5,
-              color: Color(0x889AA2AC),
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: valueColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _groupCard(
-      String icon,
-      String groupName,
-      String amount,
-      Color iconColor,
-      ) {
-    return Container(
-      width: 130,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1EEE5),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE4E0D5),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: iconColor,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Center(
-              child: Text(
-                icon,
-                style: const TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 9),
-
-          Text(
-            groupName,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF17202B),
-            ),
-          ),
-
-          const SizedBox(height: 2),
-
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 10.5,
-              color: Color(0xFF9AA2AC),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _activityRow(
-      String icon,
-      String title,
-      String subtitle,
-      String amount,
-      Color iconColor,
-      ) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(22, 0, 22, 10),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 13,
-        vertical: 11,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF8F3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE4E0D5),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: iconColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                icon,
-                style: const TextStyle(
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 11),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF17202B),
-                  ),
-                ),
-
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    color: Color(0xFF9AA2AC),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Text(
-            amount,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: iconColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool active;
-
-  const _NavItem(
-      this.icon,
-      this.label,
-      this.active,
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: active
-              ? const Color(0xFFE3492F)
-              : const Color(0xFF9AA2AC),
-        ),
-
-        const SizedBox(height: 4),
-
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 9.5,
-            fontWeight: FontWeight.w600,
-            color: active
-                ? const Color(0xFFE3492F)
-                : const Color(0xFF9AA2AC),
-          ),
-        ),
-      ],
     );
   }
 }

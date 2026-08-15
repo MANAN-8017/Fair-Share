@@ -1,38 +1,14 @@
 import 'package:flutter/material.dart';
-import './register_screen.dart';
-import './login_screen.dart';
-import '../../services/navigation_service.dart';
+import '../../routes/routes.dart';
+import '../../widgets/widgets.dart';
 
-class AuthOptionScreen extends StatefulWidget {
+class AuthOptionScreen extends StatelessWidget {
   const AuthOptionScreen({super.key});
 
   @override
-  State<AuthOptionScreen> createState() => _AuthOptionScreenState();
-}
-
-class _AuthOptionScreenState extends State<AuthOptionScreen> {
-  bool isCircle = false;
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  void loginRouter(){
-    setState(() {
-      isCircle = true;
-    });
-    NavigationService.navigateAfterDelay(context, const LoginScreen(), 0);
-  }
-
-  void registerRouter(){
-    setState(() {
-      isCircle = true;
-    });
-    NavigationService.navigateAfterDelay(context, const RegisterScreen(), 0);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final logoSize = MediaQuery.of(context).size.width * 0.25;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F3),
       body: SafeArea(
@@ -43,45 +19,7 @@ class _AuthOptionScreenState extends State<AuthOptionScreen> {
               const Spacer(flex: 2),
 
               // Logo
-              Builder(
-                builder: (context) {
-                  final logoSize =
-                      MediaQuery.of(context).size.width * 0.25;
-
-                  return SizedBox(
-                    width: logoSize,
-                    height: logoSize,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: logoSize * 0.08,
-                          top: logoSize * 0.32,
-                          child: Container(
-                            width: logoSize * 0.70,
-                            height: logoSize * 0.40,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF2F9E8F),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: logoSize * 0.32,
-                          top: logoSize * 0.32,
-                          child: Container(
-                            width: logoSize * 0.70,
-                            height: logoSize * 0.40,
-                            decoration: const BoxDecoration(
-                              color: Color(0xE0FF6452),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              FairShareLogo(size: logoSize),
 
               const SizedBox(height: 25),
 
@@ -98,6 +36,7 @@ class _AuthOptionScreenState extends State<AuthOptionScreen> {
 
               const SizedBox(height: 10),
 
+              // Description
               const Text(
                 "Split expenses. Track balances.\nKeep friendships simple.",
                 textAlign: TextAlign.center,
@@ -115,7 +54,7 @@ class _AuthOptionScreenState extends State<AuthOptionScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: loginRouter,
+                  onPressed: () => AppRouter.toLogin(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF6452),
                     foregroundColor: Colors.white,
@@ -141,7 +80,7 @@ class _AuthOptionScreenState extends State<AuthOptionScreen> {
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton(
-                  onPressed: registerRouter,
+                  onPressed: () => AppRouter.toRegister(context),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF17202B),
                     side: const BorderSide(
@@ -163,18 +102,9 @@ class _AuthOptionScreenState extends State<AuthOptionScreen> {
 
               const SizedBox(height: 20),
 
-              if (isCircle)
-                const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Color(0xFF17202B),
-                  ),
-                ),
-
               const Spacer(flex: 2),
 
+              // Footer
               const Text(
                 "FairShare • Simple expense sharing",
                 style: TextStyle(

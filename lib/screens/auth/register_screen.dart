@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import './login_screen.dart';
-import './auth_option.dart';
-import 'package:fair_share/services/auth_service.dart';
-import '../../services/navigation_service.dart';
+import 'auth.dart';
+import '../../routes/routes.dart';
+import '../../services/services.dart';
+import '../../widgets/widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,30 +11,17 @@ class RegisterScreen extends StatefulWidget {
   State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen>
-    with SingleTickerProviderStateMixin
-{
-  bool isCircle = false;
+class _RegisterScreenState extends State<RegisterScreen> {
 
-  // Controllers
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
 
-  late AnimationController _dotController;
-
   bool isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _dotController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-  }
+  final AuthService authService = AuthService();
 
   void register() {
     String username = usernameController.text.trim();
@@ -43,29 +30,17 @@ class _RegisterScreenState extends State<RegisterScreen>
     String password = passwordController.text.trim();
     String confirmPassword = confirmPasswordController.text.trim();
 
-    AuthService authService = AuthService();
-    bool success = authService.register(username, name, email, password, confirmPassword);
+    String? error = authService.register(username, name, email, password, confirmPassword);
 
-    if(success){
+    if (error == null) {
       setState(() {
         isLoading = true;
       });
-      NavigationService.navigateAfterDelay(context, const LoginScreen(), 2);
+
+      NavigationService.navigateAfterDelay( context, const LoginScreen(successMessage: "Account created successfully.",), 2);
+    } else {
+      AppSnackBar.error(context, error);
     }
-  }
-
-  void loginRouter(){
-    setState(() {
-      isLoading = true;
-    });
-    NavigationService.navigateAfterDelay(context, const LoginScreen(), 0);
-  }
-
-  void authOptionRouter() {
-    setState(() {
-      isCircle = true;
-    });
-    NavigationService.navigateAfterDelay(context, const AuthOptionScreen(), 0);
   }
 
   @override
@@ -95,7 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
-                    onPressed: authOptionRouter,
+                    onPressed: () => AppRouter.toAuthOption(context),
                     child: const Text(
                       "← Back",
                       style: TextStyle(
@@ -271,21 +246,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                       ),
                     ),
                     child: isLoading
-                        ? AnimatedBuilder(
-                      animation: _dotController,
-                      builder: (context, child) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildDot(0),
-                            const SizedBox(width: 6),
-                            _buildDot(1),
-                            const SizedBox(width: 6),
-                            _buildDot(2),
-                          ],
-                        );
-                      },
+                        ? const LoadingDots(
+                      color: Colors.white,
+                      size: 7,
+                      spacing: 6,
                     )
                         : const Text(
                       "Create Account",
@@ -308,7 +272,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       ),
                     ),
                     TextButton(
-                      onPressed: loginRouter,
+                      onPressed: () => AppRouter.toLogin(context),
                       child: const Text(
                         "Log in",
                         style: TextStyle(
@@ -322,38 +286,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 const SizedBox(height: 20),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildDot(int index) {
-    double progress =
-        (_dotController.value - (index * 0.125)) % 1.0;
-
-    double opacity;
-
-    if (progress < 0.4) {
-      opacity = 0.25 + (progress / 0.4) * 0.75;
-    } else {
-      opacity = 1.0 - ((progress - 0.4) / 0.6) * 0.75;
-    }
-
-    double scale = 0.85 + (opacity - 0.25) / 0.75 * 0.15;
-
-    final double dotSize =
-        MediaQuery.of(context).size.width * 0.025;
-
-    return Opacity(
-      opacity: opacity,
-      child: Transform.scale(
-        scale: scale,
-        child: Container(
-          width: dotSize,
-          height: dotSize,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
           ),
         ),
       ),

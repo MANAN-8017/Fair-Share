@@ -1,33 +1,34 @@
 import 'package:flutter/material.dart';
 import '../home_screen.dart';
-import './register_screen.dart';
-import 'package:fair_share/services/auth_service.dart';
-import '../../services/navigation_service.dart';
+import '../../routes/routes.dart';
+import '../../services/services.dart';
+import '../../widgets/widgets.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? successMessage;
+  const LoginScreen({super.key, this.successMessage,});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  late AnimationController _dotController;
-
   bool isLoading = false;
+
+  final AuthService authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    _dotController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.successMessage != null) {
+        AppSnackBar.success( context, widget.successMessage!);
+      }
+    });
   }
 
   void login() {
@@ -35,32 +36,26 @@ class _LoginScreenState extends State<LoginScreen>
     String password = passwordController.text.trim();
 
     AuthService authService = AuthService();
-    bool success = authService.login(email, password);
+    String? error = authService.login(email, password);
 
-    if (success) {
+    if (error == null) {
       setState(() {
         isLoading = true;
       });
-
-      NavigationService.navigateAfterDelay(
-        context,
-        const HomeScreen(),
-        2,
+      NavigationService.navigateAfterDelay( context, const HomeScreen(successMessage: "Logged in successfully."), 2);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error)
+        ),
       );
     }
-  }
-
-  void registerRouter(){
-    setState(() {
-    });
-    NavigationService.navigateAfterDelay(context, const RegisterScreen(), 0);
   }
 
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
-    _dotController.dispose();
     super.dispose();
   }
 
@@ -81,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen>
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
-                    onPressed: registerRouter,
+                    onPressed: () => AppRouter.toAuthOption(context),
                     child: const Text(
                       "← Back",
                       style: TextStyle(
@@ -199,21 +194,10 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     child: isLoading
-                        ? AnimatedBuilder(
-                      animation: _dotController,
-                      builder: (context, child) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildDot(0),
-                            const SizedBox(width: 6),
-                            _buildDot(1),
-                            const SizedBox(width: 6),
-                            _buildDot(2),
-                          ],
-                        );
-                      },
+                        ? const LoadingDots(
+                      color: Colors.white,
+                      size: 7,
+                      spacing: 6,
                     )
                         : const Text(
                       "Log in",
@@ -237,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ),
                     TextButton(
-                      onPressed: registerRouter,
+                      onPressed: () => AppRouter.toRegister(context),
                       child: const Text(
                         "Create an account",
                         style: TextStyle(
@@ -250,38 +234,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-  Widget _buildDot(int index) {
-    double progress =
-        (_dotController.value - (index * 0.125)) % 1.0;
-
-    double opacity;
-
-    if (progress < 0.4) {
-      opacity = 0.25 + (progress / 0.4) * 0.75;
-    } else {
-      opacity = 1.0 - ((progress - 0.4) / 0.6) * 0.75;
-    }
-
-    double scale = 0.85 + (opacity - 0.25) / 0.75 * 0.15;
-
-    final double dotSize =
-        MediaQuery.of(context).size.width * 0.025;
-
-    return Opacity(
-      opacity: opacity,
-      child: Transform.scale(
-        scale: scale,
-        child: Container(
-          width: dotSize,
-          height: dotSize,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
           ),
         ),
       ),
