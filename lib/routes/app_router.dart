@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/auth/auth.dart';
+import '../screens/groups/group_screen.dart';
+import '../screens/groups/create_group_screen.dart';
+import '../screens/groups/group_details_screen.dart';
 import '../services/navigation_service.dart';
 
 class AppRouter {
@@ -61,6 +64,33 @@ class AppRouter {
       context,
       const HomeScreen(),
       delay: delay,
+    );
+  }
+
+  static Future<dynamic> toGroups(
+      BuildContext context, {
+        int delay = 0,
+      }) {
+    return NavigationService.push(
+      context,
+      const GroupsScreen(),
+    );
+  }
+
+  static Future<dynamic> toCreateGroup(
+      BuildContext context, {
+        int delay = 0,
+      }) {
+    return NavigationService.push(
+      context,
+      const CreateGroupScreen(),
+    );
+  }
+
+  static Future<dynamic> toGroupDetails(BuildContext context, Map<String, dynamic> group) {
+    return NavigationService.push(
+      context,
+      GroupDetailsScreen(group: group),
     );
   }
 }

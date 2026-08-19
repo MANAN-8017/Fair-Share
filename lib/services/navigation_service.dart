@@ -23,6 +23,20 @@ class NavigationService {
     );
   }
 
+  static Future<dynamic> push(
+      BuildContext context,
+      Widget screen,
+      ) async {
+    if(!context.mounted) return;
+
+    return await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => screen,
+      )
+    );
+  }
+
   static Future<void> replace(
       BuildContext context,
       Widget screen, {

@@ -20,6 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String greeting = "Good evening";
   String? name = "User";
   bool isLoading = false;
+  List<Map<String, dynamic>> userGroups = [];
+  bool isLoadingGroups = true;
 
   @override
   void initState() {
@@ -27,11 +29,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     setGreeting();
     loadUser();
+    loadGroups();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.successMessage != null) {
         AppSnackBar.success(context, widget.successMessage!);
       }
+    });
+  }
+
+  Future<void> loadGroups() async {
+    final GroupService groupService = GroupService();
+    final groups = await groupService.getUserGroups();
+
+    if (!mounted) return;
+
+    setState(() {
+      userGroups = groups;
+      isLoadingGroups = false;
     });
   }
 
@@ -238,25 +253,52 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     SizedBox(
                       height: 115,
-                      child: ListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 22),
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          GroupCard(
-                            icon: "?",
-                            groupName: "Flatmates",
-                            amount: "+\$64.00",
-                            iconColor: const Color(0xFF2F9E8F),
-                          ),
-                          const SizedBox(width: 12),
-                          GroupCard(
-                            icon: "?",
-                            groupName: "Goa Trip",
-                            amount: "+\$22.00",
-                            iconColor: const Color(0xFFFF6452),
-                          ),
-                        ],
-                      ),
+                      child: isLoadingGroups
+                        ? const Center(
+                            child: LoadingDots(
+                              color: Color(0xFFFF6452),
+                              size: 8,
+                              spacing: 8,
+                            ),
+                          )
+                          : userGroups.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    "No groups yet. Go to Groups to create one!",
+                                    style: TextStyle(
+                                      color: Color(0xFF5A6472),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 22),
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: userGroups.length,
+                                  itemBuilder: (context, index) {
+                                    final group = userGroups[index];
+
+                                    final groupName = group['name'] as String? ?? 'Group';
+
+                                    final iconChar = groupName.isNotEmpty
+                                        ? groupName[0].toUpperCase()
+                                        : '?';
+
+                                    final iconColor = (index % 2 == 0)
+                                        ? const Color(0xFF2F9E8F)
+                                        : const Color(0xFFFF6452);
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 12),
+                                      child: GroupCard(
+                                        icon: iconChar,
+                                        groupName: groupName,
+                                        amount: "\$0.00", // Hardcoded until we build expenses
+                                        iconColor: iconColor,
+                                      ),
+                                    );
+                                  },
+                                ),
                     ),
 
                     const SizedBox(height: 18),
@@ -301,8 +343,27 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   NavItem(Icons.home_outlined, "Home", true),
-                  NavItem(Icons.people_outline, "Groups", false),
-                  NavItem(Icons.add, "Add", false),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      AppRouter.toGroups(context);
+                    },
+                    child: NavItem(Icons.people_outline, "Groups", false),
+                  ),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () async {
+                        final result = await AppRouter.toCreateGroup(context);
+
+                        if (result == true) {
+                          setState(() {
+                            isLoadingGroups = true;
+                          });
+                          loadGroups();
+                        }
+                      },
+                    child: NavItem(Icons.add, "Add", false),
+                  ),
                   NavItem(Icons.person_outline, "Account", false),
                 ],
               ),
