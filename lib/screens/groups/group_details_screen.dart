@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/services.dart';
 import '../../widgets/widgets.dart';
+import '../../routes/routes.dart';
 
 class GroupDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> group;
@@ -14,15 +15,34 @@ class GroupDetailsScreen extends StatefulWidget {
 
 class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final GroupService _groupService = GroupService();
+  final ExpenseService _expenseService = ExpenseService();
+
   final String currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
   List<Map<String, dynamic>> members = [];
   bool isLoading = true;
+  List<Map<String, dynamic>> expenses = [];
+  bool isLoadingExpenses = true;
+
+  static const Map<String, String> _categoryEmoji = {
+    'food': '🍜',
+    'travel': '🚗',
+    'rent': '🏠',
+    'utility': '💡',
+  };
+
+  static const Map<String, Color> _categoryColor = {
+    'food': Color(0xFF2F9E8F),
+    'travel': Color(0xFFFF6452),
+    'rent': Color(0xFFC98A2C),
+    'utility': Color(0xFF6C63A6),
+  };
 
   @override
   void initState() {
     super.initState();
     _loadMembers();
+    _loadExpenses();
   }
 
   bool get isCreator => currentUserId == widget.group['created_by'];
@@ -34,6 +54,16 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     setState(() {
       members = fetchedMembers;
       isLoading = false;
+    });
+  }
+
+  Future<void> _loadExpenses() async {
+    setState(() => isLoadingExpenses = true);
+    final fetchedExpenses = await _expenseService.getGroupExpenses(widget.group['id']);
+    if (!mounted) return;
+    setState(() {
+      expenses = fetchedExpenses;
+      isLoadingExpenses = false;
     });
   }
 
@@ -160,10 +190,48 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     }
   }
 
+  Future<void> _goToAddExpense() async {
+    if (members.isEmpty) {
+      AppSnackBar.error(context, "Add at least one member before creating an expense.");
+      return;
+    }
+
+    final result = await AppRouter.toAddExpense(
+      context,
+      group: widget.group,
+      members: members,
+    );
+
+    if (result == true) {
+      _loadExpenses();
+    }
+  }
+
+  void _goToExpenseDetails(Map<String, dynamic> expense) {
+    AppRouter.toExpenseDetails(
+      context,
+      expense: expense,
+      members: members,
+      currentUserId: currentUserId,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F3),
+      floatingActionButton: isLoading
+          ? null
+          : FloatingActionButton.extended(
+        onPressed: _goToAddExpense,
+        backgroundColor: const Color(0xFFFF6452),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          "Add Expense",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFAF8F3),
         elevation: 0,
@@ -183,45 +251,47 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       ),
       body: isLoading
           ? const Center(child: LoadingDots(color: Color(0xFFFF6452), size: 8, spacing: 8))
-          : Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.group['description'] != null && widget.group['description'].toString().isNotEmpty)
+          : SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.group['description'] != null && widget.group['description'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                child: Text(
+                  widget.group['description'],
+                  style: const TextStyle(fontSize: 15, color: Color(0xFF5A6472)),
+                ),
+              ),
+
+            const SizedBox(height: 20),
+
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              child: Text(
-                widget.group['description'],
-                style: const TextStyle(fontSize: 15, color: Color(0xFF5A6472)),
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "MEMBERS",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1, color: Color(0xFF5A6472)),
+                  ),
+                  if (isCreator)
+                    TextButton.icon(
+                      onPressed: _showAddMemberDialog,
+                      icon: const Icon(Icons.person_add, size: 18, color: Color(0xFF2F9E8F)),
+                      label: const Text("Add", style: TextStyle(color: Color(0xFF2F9E8F), fontWeight: FontWeight.bold)),
+                    )
+                ],
               ),
             ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "MEMBERS",
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1, color: Color(0xFF5A6472)),
-                ),
-                if (isCreator)
-                  TextButton.icon(
-                    onPressed: _showAddMemberDialog,
-                    icon: const Icon(Icons.person_add, size: 18, color: Color(0xFF2F9E8F)),
-                    label: const Text("Add", style: TextStyle(color: Color(0xFF2F9E8F), fontWeight: FontWeight.bold)),
-                  )
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Members List
-          Expanded(
-            child: ListView.builder(
+            // Members List
+            ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 22),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               itemCount: members.length,
               itemBuilder: (context, index) {
                 final memberRecord = members[index];
@@ -291,8 +361,57 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 );
               },
             ),
-          ),
-        ],
+
+            const SizedBox(height: 20),
+
+            // Activity / Expenses section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "ACTIVITY",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1, color: Color(0xFF5A6472)),
+                  ),
+                  const SizedBox(height: 10),
+
+                  isLoadingExpenses
+                      ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(child: LoadingDots(color: Color(0xFFFF6452), size: 6, spacing: 6)),
+                  )
+                      : expenses.isEmpty
+                      ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Text("No expenses yet.", style: TextStyle(color: Color(0xFF9AA2AC))),
+                  )
+                      : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: expenses.length,
+                    itemBuilder: (context, index) {
+                      final expense = expenses[index];
+                      final category = expense['category'] as String? ?? 'other';
+                      final paidByUser = expense['users'] as Map<String, dynamic>?;
+
+                      return ActivityRow(
+                        icon: _categoryEmoji[category] ?? '💸',
+                        iconColor: _categoryColor[category] ?? const Color(0xFF9AA2AC),
+                        title: expense['description'] ?? '',
+                        subtitle: "Paid by ${paidByUser?['name'] ?? 'someone'}",
+                        amount: "\$${(expense['amount'] as num).toStringAsFixed(2)}",
+                        onTap: () => _goToExpenseDetails(expense),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 90), // leave room so the FAB doesn't cover the last row
+          ],
+        ),
       ),
     );
   }
