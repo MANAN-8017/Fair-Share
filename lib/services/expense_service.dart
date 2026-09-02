@@ -127,16 +127,79 @@ class ExpenseService {
       final userid = entry.key;
       final a = entry.value;
 
-      if(a < 0.0005) continue;
+      if(a.abs() < 0.0005) continue;
 
       result.add({
         'user_id': userid,
         'name': nameById[userid] ?? 'Unknown',
-        'net_amount': a,
+        'netAmount': a,
         'split_ids': splitByIds[userid] ?? [],
       });
     }
     return result;
+  }
+
+  List<Map<String, dynamic>> computeGroupNetBalances({
+    required List<Map<String, dynamic>> expenses,
+    required List<Map<String, dynamic>> members,
+  }) {
+    final net = <String, double>{};
+    final nameById = <String, String>{};
+
+    // Initialize every group member with 0 balance
+    for (final member in members) {
+      final user = member['users'];
+
+      if (user == null) continue;
+
+      final userId = user['id'] as String;
+      final name = user['name'] as String? ?? 'Unknown';
+
+      net[userId] = 0.0;
+      nameById[userId] = name;
+    }
+
+    // Calculate the complete group's net balance
+    for (final expense in expenses) {
+      final paidBy = expense['paid_by'] as String?;
+
+      if (paidBy == null) continue;
+
+      final expenseAmount =
+          (expense['amount'] as num?)?.toDouble() ?? 0.0;
+
+      // Person who paid gets credit
+      net[paidBy] = (net[paidBy] ?? 0.0) + expenseAmount;
+
+      final splits = List<Map<String, dynamic>>.from(
+        expense['expense_splits'] ?? [],
+      );
+
+      // People who owe their share get debited
+      for (final split in splits) {
+        if (split['is_settled'] == true) continue;
+
+        final userId = split['user_id'] as String?;
+
+        if (userId == null) continue;
+
+        final amount =
+            (split['amount'] as num?)?.toDouble() ?? 0.0;
+
+        net[userId] = (net[userId] ?? 0.0) - amount;
+      }
+    }
+
+    return net.entries
+        .where((entry) => entry.value.abs() >= 0.0005)
+        .map((entry) {
+      return {
+        'userId': entry.key,
+        'name': nameById[entry.key] ?? 'Unknown',
+        'netAmount': entry.value,
+      };
+    })
+        .toList();
   }
 
   Future<String> settleWithUser(List<String> splitIds) async {

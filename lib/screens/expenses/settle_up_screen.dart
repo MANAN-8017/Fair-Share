@@ -46,7 +46,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
 
   Future<void> _confirmAndSettle(Map<String, dynamic> balance) async {
     final name = balance['name'] as String;
-    final netAmount = balance['net_amount'] as double;
+    final netAmount = (balance['netAmount'] as num?)?.toDouble() ?? 0.0;
     final theyOweYou = netAmount > 0;
     final amount = netAmount.abs();
 
@@ -93,7 +93,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final overall = _balances.fold<double>(0, (sum, b) => sum + (b['net_amount'] as double));
+    final overall = _balances.fold<double>(0.0, (sum, b) => sum + ((b['netAmount'] as num?)?.toDouble() ?? 0.0));
 
     return PopScope(
       canPop: false,
@@ -155,7 +155,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
 
             final balance = _balances[index - 1];
             final name = balance['name'] as String;
-            final netAmount = balance['net_amount'] as double;
+            final netAmount = (balance['netAmount'] as num?)?.toDouble() ?? 0.0;
             final theyOweYou = netAmount > 0;
             final color = theyOweYou ? const Color(0xFF2F9E8F) : const Color(0xFFFF6452);
 

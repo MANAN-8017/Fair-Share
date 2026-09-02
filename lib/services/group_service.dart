@@ -45,7 +45,7 @@ class GroupService{
 
       final response = await supabase
           .from("groups")
-          .select("id, name, description, created_by, group_members!inner(user_id)")
+          .select("id, name, description, isSimplify, created_by, group_members!inner(user_id)")
           .eq('group_members.user_id', user.id)
           .order('created_at', ascending: false);
 

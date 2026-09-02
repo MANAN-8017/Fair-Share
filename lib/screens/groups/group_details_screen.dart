@@ -19,9 +19,9 @@ class GroupDetailsScreen extends StatefulWidget {
 class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final GroupService _groupService = GroupService();
   final ExpenseService _expenseService = ExpenseService();
+  final DebtSimplificationService _debtSimplificationService = DebtSimplificationService();
 
-  final String currentUserId =
-      Supabase.instance.client.auth.currentUser!.id;
+  final String currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
   List<Map<String, dynamic>> members = [];
   bool isLoading = true;
@@ -54,8 +54,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     'utility': Color(0xFF6C63A6),
   };
 
-  bool get isCreator =>
-      currentUserId == widget.group['created_by'];
+  bool get isCreator => currentUserId == widget.group['created_by'];
+
+  List<Debt> transactions = [];
 
   @override
   void initState() {
@@ -63,6 +64,34 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     _isSimplifyOn = widget.group['isSimplify'] ?? false;
     _loadMembers();
     _loadExpenses();
+    if (_isSimplifyOn) {
+      _loadTransactions();
+    }
+  }
+
+  Future<void> _loadTransactions() async {
+    try {
+      final result = await _debtSimplificationService.simplify(
+        widget.group['id'].toString(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        transactions = result;
+      });
+    } catch (e) {
+      print('Failed to load simplified debts: $e');
+    }
+  }
+
+  String _getMemberName(String userId) {
+    final member = members.firstWhere(
+          (member) => member['id'] == userId,
+      orElse: () => {},
+    );
+
+    return member['name'] ?? 'someone';
   }
 
   Future<void> _toggleSimplify(bool value) async {
@@ -76,24 +105,41 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           .update({'isSimplify': value})
           .eq('id', widget.group['id']);
 
+      if (value) {
+        final result = await _debtSimplificationService.simplify(
+          widget.group['id'].toString(),
+        );
+
+        if (!mounted) return;
+
+        setState(() {
+          transactions = result;
+        });
+      } else {
+        if (!mounted) return;
+
+        setState(() {
+          transactions = [];
+        });
+      }
+
       widget.group['isSimplify'] = value;
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isSimplifyOn = !value;
-        });
-        AppSnackBar.error(context, "Failed to update simplify setting.");
-      }
+      if (!mounted) return;
+
+      setState(() {
+        _isSimplifyOn = !value;
+      });
+
+      AppSnackBar.error(
+        context,
+        "Failed to update simplify setting.",
+      );
     }
   }
 
   Widget _buildBalanceSummary() {
     final currentBalances = balances;
-
-    final overall = currentBalances.fold<double>(
-      0,
-          (sum, b) => sum + ((b['net_amount'] as num?)?.toDouble() ?? 0.0),
-    );
 
     if (currentBalances.isEmpty) {
       return Padding(
@@ -112,7 +158,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             ),
           ),
           child: const Text(
-            "You're all settled up in this group 🎉",
+            "You're all settled up in this group",
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: Color(0xFF5A6472),
@@ -122,9 +168,44 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       );
     }
 
-    final owed = overall >= 0;
+    // ------------------------------------------------------------
+    // NORMAL BALANCE
+    // ------------------------------------------------------------
 
-    final headlineColor = owed
+    final currentUserBalance = currentBalances.firstWhere(
+          (b) => b['userId'] == currentUserId,
+      orElse: () => {'netAmount': 0.0},
+    );
+
+    final overall =
+        (currentUserBalance['netAmount'] as num?)?.toDouble() ?? 0.0;
+
+    // ------------------------------------------------------------
+    // SIMPLIFIED BALANCE
+    // ------------------------------------------------------------
+
+    double simplifiedOverall = 0.0;
+
+    for (final debt in transactions) {
+      if (debt.from == currentUserId) {
+        // You have to pay this amount
+        simplifiedOverall -= debt.netAmount;
+      } else if (debt.to == currentUserId) {
+        // You receive this amount
+        simplifiedOverall += debt.netAmount;
+      }
+    }
+
+    // ------------------------------------------------------------
+    // SELECT WHICH BALANCE TO DISPLAY
+    // ------------------------------------------------------------
+
+    final displayedBalance =
+    _isSimplifyOn ? simplifiedOverall : overall;
+
+    final displayedOwed = displayedBalance >= 0;
+
+    final headlineColor = displayedOwed
         ? const Color(0xFF1B5C53)
         : const Color(0xFFE3492F);
 
@@ -146,6 +227,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            // ----------------------------------------------------
+            // HEADER
+            // ----------------------------------------------------
+
             InkWell(
               onTap: () {
                 setState(() {
@@ -153,8 +239,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 });
               },
               child: Row(
-                mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text.rich(
@@ -166,18 +251,20 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         ),
                         children: [
                           TextSpan(
-                            text: owed
+                            text: displayedOwed
                                 ? "You are owed "
                                 : "You owe ",
                           ),
+
                           TextSpan(
                             text:
-                            "\$${overall.abs().toStringAsFixed(2)}",
+                            "\$${displayedBalance.abs().toStringAsFixed(2)}",
                             style: TextStyle(
                               color: headlineColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+
                           const TextSpan(
                             text: " overall",
                           ),
@@ -185,6 +272,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                     ),
                   ),
+
                   Icon(
                     _balanceExpanded
                         ? Icons.keyboard_arrow_up
@@ -194,49 +282,136 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 ],
               ),
             ),
+
+            // ----------------------------------------------------
+            // EXPANDED BALANCES
+            // ----------------------------------------------------
+
             if (_balanceExpanded) ...[
               const SizedBox(height: 10),
-              ...currentBalances.map((b) {
-                final netAmount =
-                (b['net_amount'] as num).toDouble();
 
-                final theyOweYou = netAmount > 0;
+              if (_isSimplifyOn)
 
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 3,
-                        height: 14,
-                        color: const Color(0xFFE4E0D5),
+              // ----------------------------------------------
+              // SIMPLIFIED TRANSACTIONS
+              // ----------------------------------------------
+
+                if (transactions.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Text(
+                      "You're all settled up.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF5A6472),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          theyOweYou
-                              ? "${b['name']} owes you"
-                              : "You owe ${b['name']}",
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF5A6472),
+                    ),
+                  )
+                else
+                  ...transactions.map((debt) {
+
+                    final isCurrentUserDebtor =
+                        debt.from == currentUserId;
+
+                    final isCurrentUserCreditor =
+                        debt.to == currentUserId;
+
+                    // Only show transactions involving current user.
+                    if (!isCurrentUserDebtor &&
+                        !isCurrentUserCreditor) {
+                      return const SizedBox.shrink();
+                    }
+
+                    final amount = debt.netAmount;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 3,
+                            height: 14,
+                            color: const Color(0xFFE4E0D5),
+                          ),
+
+                          const SizedBox(width: 10),
+
+                          Expanded(
+                            child: Text(
+                              isCurrentUserDebtor
+                                  ? "You owe ${_getMemberName(debt.to)}"
+                                  : "${_getMemberName(debt.from)} owes you",
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF5A6472),
+                              ),
+                            ),
+                          ),
+
+                          Text(
+                            "\$${amount.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isCurrentUserDebtor
+                                  ? const Color(0xFFFF6452)
+                                  : const Color(0xFF2F9E8F),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  })
+
+              else
+
+              // ----------------------------------------------
+              // ORIGINAL BALANCES
+              // ----------------------------------------------
+
+                ...currentBalances.map((b) {
+                  final netAmount = (b['netAmount'] as num?)?.toDouble() ?? 0.0;
+
+                  final theyOweYou = netAmount > 0;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 3,
+                          height: 14,
+                          color: const Color(0xFFE4E0D5),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        Expanded(
+                          child: Text(
+                            theyOweYou
+                                ? "${b['name']} owes you"
+                                : "You owe ${b['name']}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF5A6472),
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        "\$${netAmount.abs().toStringAsFixed(2)}",
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: theyOweYou
-                              ? const Color(0xFF2F9E8F)
-                              : const Color(0xFFFF6452),
+
+                        Text(
+                          "\$${netAmount.abs().toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: theyOweYou
+                                ? const Color(0xFF2F9E8F)
+                                : const Color(0xFFFF6452),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
+                      ],
+                    ),
+                  );
+                }),
             ],
           ],
         ),
@@ -439,6 +614,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         CrossAxisAlignment.end,
         children: [
           FloatingActionButton.extended(
+              heroTag: 'settle_up_fab',
             onPressed: _goToSettleUp,
             backgroundColor:
             const Color(0xFF5277FF),
@@ -452,6 +628,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           ),
           const SizedBox(height: 12),
           FloatingActionButton.extended(
+              heroTag: 'add_expense_fab',
             onPressed: _goToAddExpense,
             backgroundColor:
             const Color(0xFFFF6452),
