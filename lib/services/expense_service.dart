@@ -91,38 +91,37 @@ class ExpenseService {
     }
     final splitByIds = <String, List<String>>{};
     final net = <String,double>{};
-    String? temp;
 
     for(var expense in expenses){
-        final paidBy = expense['paid_by'];
-        if(paidBy == null) continue;
-        final splits = List<Map<String, dynamic>>.from(
-          expense['expense_splits'] ?? [],
-        );
+      final paidBy = expense['paid_by'];
+      if(paidBy == null) continue;
+      final splits = List<Map<String, dynamic>>.from(
+        expense['expense_splits'] ?? [],
+      );
 
-        for(final split in splits){
-          if(split['is_settled'] == true) continue;
+      for(final split in splits){
+        if(split['is_settled'] == true) continue;
 
-          final splitUser = split['user_id'];
-          final id = split['id'];
-          final a = split['amount'] as double ?? 0;
+        final splitUser = split['user_id'];
+        final id = split['id'];
+        final a = (split['amount'] as num?)?.toDouble() ?? 0.0;
 
-          if(paidBy == splitUser) continue;
-          if(id == null || splitUser == null) continue;
+        String? otherUser;
 
-          if(paidBy == currentUserId){
-            net[splitUser] = (net[splitUser] ?? 0) + a;
-            temp = splitUser;
-          }else if(splitUser == currentUserId){
-            net[paidBy] = (net[paidBy] ?? 0) - a;
-            temp = paidBy;
-          }
-          if (temp != null) {
-            final ids = splitByIds[temp] ?? [];
-            ids.add(id);
-            splitByIds[temp] = ids;
-          }
+        if (paidBy == currentUserId) {
+          otherUser = splitUser;
+          net[splitUser] = (net[splitUser] ?? 0.0) + a;
+        } else if (splitUser == currentUserId) {
+          otherUser = paidBy;
+          net[paidBy] = (net[paidBy] ?? 0.0) - a;
         }
+
+        if (otherUser != null) {
+          final ids = splitByIds[otherUser] ?? [];
+          ids.add(id);
+          splitByIds[otherUser] = ids;
+        }
+      }
     }
     for(final entry in net.entries){
       final userid = entry.key;

@@ -31,6 +31,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   bool _balanceExpanded = true;
 
+  late bool _isSimplifyOn;
+
   List<Map<String, dynamic>> get balances =>
       _expenseService.computeBalances(
         expenses: expenses,
@@ -58,8 +60,31 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _isSimplifyOn = widget.group['isSimplify'] ?? false;
     _loadMembers();
     _loadExpenses();
+  }
+
+  Future<void> _toggleSimplify(bool value) async {
+    setState(() {
+      _isSimplifyOn = value;
+    });
+
+    try {
+      await Supabase.instance.client
+          .from('groups')
+          .update({'isSimplify': value})
+          .eq('id', widget.group['id']);
+
+      widget.group['isSimplify'] = value;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSimplifyOn = !value;
+        });
+        AppSnackBar.error(context, "Failed to update simplify setting.");
+      }
+    }
   }
 
   Widget _buildBalanceSummary() {
@@ -67,7 +92,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
     final overall = currentBalances.fold<double>(
       0,
-          (sum, b) => sum + (b['net_amount'] as double),
+          (sum, b) => sum + ((b['net_amount'] as num?)?.toDouble() ?? 0.0),
     );
 
     if (currentBalances.isEmpty) {
@@ -509,27 +534,25 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 horizontal: 22,
               ),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
                     onTap: _goToMembersScreen,
                     child: Container(
-                      padding:
-                      const EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 14,
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.transparent,
-                        borderRadius:
-                        BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFF17202B)
-                              .withOpacity(0.3),
+                          color: const Color(0xFF17202B).withOpacity(0.3),
                         ),
                       ),
+                      // View members button
                       child: Row(
-                        mainAxisSize:
-                        MainAxisSize.min,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
                             Icons.people_outline,
@@ -539,12 +562,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           const SizedBox(width: 6),
                           Text(
                             "${members.length} people",
-                            style:
-                            const TextStyle(
-                              fontWeight:
-                              FontWeight.w600,
-                              color:
-                              Color(0xFF17202B),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF17202B),
                               fontSize: 13,
                             ),
                           ),
@@ -552,6 +572,29 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                     ),
                   ),
+
+                  // Simplify debts toggle
+                  if (isCreator)
+                    Row(
+                      children: [
+                        const Text(
+                          "Simplify Debts",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF5A6472),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Switch(
+                          value: _isSimplifyOn,
+                          onChanged: _toggleSimplify,
+                          activeColor: const Color(0xFF2F9E8F),
+                          inactiveThumbColor: const Color(0xFF9AA2AC),
+                          inactiveTrackColor: const Color(0xFFE4E0D5),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
