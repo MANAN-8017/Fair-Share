@@ -32,6 +32,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   bool _balanceExpanded = true;
 
   late bool _isSimplifyOn;
+  bool _isSimplifying = false;
 
   List<Map<String, dynamic>> get balances =>
       _expenseService.computeBalances(
@@ -70,6 +71,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   }
 
   Future<void> _loadTransactions() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSimplifying = true;
+    });
+
     try {
       final result = await _debtSimplificationService.simplify(
         widget.group['id'].toString(),
@@ -79,8 +86,15 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
       setState(() {
         transactions = result;
+        _isSimplifying = false;
       });
     } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSimplifying = false;
+      });
+
       print('Failed to load simplified debts: $e');
     }
   }
@@ -95,41 +109,43 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   }
 
   Future<void> _toggleSimplify(bool value) async {
+    if (_isSimplifying) return;
+
     setState(() {
-      _isSimplifyOn = value;
+      _isSimplifying = true;
     });
 
     try {
-      await Supabase.instance.client
-          .from('groups')
-          .update({'isSimplify': value})
-          .eq('id', widget.group['id']);
+      List<Debt> result = [];
 
       if (value) {
-        final result = await _debtSimplificationService.simplify(
+        result = await _debtSimplificationService.simplify(
           widget.group['id'].toString(),
         );
-
-        if (!mounted) return;
-
-        setState(() {
-          transactions = result;
-        });
-      } else {
-        if (!mounted) return;
-
-        setState(() {
-          transactions = [];
-        });
       }
 
-      widget.group['isSimplify'] = value;
+      await Supabase.instance.client
+          .from('groups')
+          .update({
+        'isSimplify': value,
+      })
+          .eq('id', widget.group['id']);
+
+      if (!mounted) return;
+      setState(() {
+        _isSimplifyOn = value;
+        transactions = value ? result : [];
+        widget.group['isSimplify'] = value;
+        _isSimplifying = false;
+      });
     } catch (e) {
       if (!mounted) return;
 
       setState(() {
-        _isSimplifyOn = !value;
+        _isSimplifying = false;
       });
+
+      print('Failed to update simplify setting: $e');
 
       AppSnackBar.error(
         context,
@@ -168,10 +184,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       );
     }
 
-    // ------------------------------------------------------------
     // NORMAL BALANCE
-    // ------------------------------------------------------------
-
     final currentUserBalance = currentBalances.firstWhere(
           (b) => b['userId'] == currentUserId,
       orElse: () => {'netAmount': 0.0},
@@ -180,10 +193,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     final overall =
         (currentUserBalance['netAmount'] as num?)?.toDouble() ?? 0.0;
 
-    // ------------------------------------------------------------
     // SIMPLIFIED BALANCE
-    // ------------------------------------------------------------
-
     double simplifiedOverall = 0.0;
 
     for (final debt in transactions) {
@@ -196,10 +206,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       }
     }
 
-    // ------------------------------------------------------------
     // SELECT WHICH BALANCE TO DISPLAY
-    // ------------------------------------------------------------
-
     final displayedBalance =
     _isSimplifyOn ? simplifiedOverall : overall;
 
@@ -228,10 +235,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // ----------------------------------------------------
             // HEADER
-            // ----------------------------------------------------
-
             InkWell(
               onTap: () {
                 setState(() {
@@ -258,7 +262,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
                           TextSpan(
                             text:
-                            "\$${displayedBalance.abs().toStringAsFixed(2)}",
+                            "₹${displayedBalance.abs().toStringAsFixed(2)}",
                             style: TextStyle(
                               color: headlineColor,
                               fontWeight: FontWeight.bold,
@@ -283,19 +287,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
             ),
 
-            // ----------------------------------------------------
             // EXPANDED BALANCES
-            // ----------------------------------------------------
-
             if (_balanceExpanded) ...[
               const SizedBox(height: 10),
 
               if (_isSimplifyOn)
-
-              // ----------------------------------------------
               // SIMPLIFIED TRANSACTIONS
-              // ----------------------------------------------
-
                 if (transactions.isEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 6),
@@ -364,11 +361,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   })
 
               else
-
-              // ----------------------------------------------
               // ORIGINAL BALANCES
-              // ----------------------------------------------
-
                 ...currentBalances.map((b) {
                   final netAmount = (b['netAmount'] as num?)?.toDouble() ?? 0.0;
 
@@ -399,7 +392,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         ),
 
                         Text(
-                          "\$${netAmount.abs().toStringAsFixed(2)}",
+                          "₹${netAmount.abs().toStringAsFixed(2)}",
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -614,7 +607,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         CrossAxisAlignment.end,
         children: [
           FloatingActionButton.extended(
-              heroTag: 'settle_up_fab',
+            heroTag: 'settle_up_fab',
             onPressed: _goToSettleUp,
             backgroundColor:
             const Color(0xFF5277FF),
@@ -628,7 +621,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           ),
           const SizedBox(height: 12),
           FloatingActionButton.extended(
-              heroTag: 'add_expense_fab',
+            heroTag: 'add_expense_fab',
             onPressed: _goToAddExpense,
             backgroundColor:
             const Color(0xFFFF6452),
@@ -762,10 +755,24 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             color: Color(0xFF5A6472),
                           ),
                         ),
-                        const SizedBox(width: 4),
+
+                        const SizedBox(width: 8),
+
+                        if (_isSimplifying)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: LoadingDots(
+                              color: Color(0xFF2F9E8F),
+                              size: 5,
+                              spacing: 4,
+                            ),
+                          ),
+
                         Switch(
                           value: _isSimplifyOn,
-                          onChanged: _toggleSimplify,
+                          onChanged: _isSimplifying
+                              ? null
+                              : _toggleSimplify,
                           activeColor: const Color(0xFF2F9E8F),
                           inactiveThumbColor: const Color(0xFF9AA2AC),
                           inactiveTrackColor: const Color(0xFFE4E0D5),
@@ -869,7 +876,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         subtitle:
                         "Paid by ${paidByUser?['name'] ?? 'someone'}",
                         amount:
-                        "\$${amount.toStringAsFixed(2)}",
+                        "₹${amount.toStringAsFixed(2)}",
                         onTap: () =>
                             _goToExpenseDetails(
                               expense,
