@@ -284,13 +284,26 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ? const Color(0xFF2F9E8F)
                                         : const Color(0xFFFF6452);
 
-                                    return Padding(
-                                      padding: const EdgeInsets.only(right: 12),
-                                      child: GroupCard(
-                                        icon: iconChar,
-                                        groupName: groupName,
-                                        amount: "\$0.00", // Hardcoded until we build expenses
-                                        iconColor: iconColor,
+                                    return GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () async {
+                                        final result = await AppRouter.toGroupDetails(context, group);
+
+                                        if (result == true) {
+                                          setState(() {
+                                            isLoadingGroups = true;
+                                          });
+                                          loadGroups();
+                                        }
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(right: 12),
+                                        child: GroupCard(
+                                          icon: iconChar,
+                                          groupName: groupName,
+                                          amount: "\$0.00",
+                                          iconColor: iconColor,
+                                        ),
                                       ),
                                     );
                                   },
