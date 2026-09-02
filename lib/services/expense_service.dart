@@ -64,7 +64,7 @@ class ExpenseService {
     try {
       final response = await supabase
           .from('expenses')
-          .select('*, users!expenses_paid_by_fkey(id, name), expense_splits(user_id, amount, percentage)')
+          .select('*, users!expenses_paid_by_fkey(id, name), expense_splits(id, user_id, amount, percentage, is_settled, settled_at)')
           .eq('group_id', groupId)
           .order('created_at', ascending: false);
 
@@ -72,6 +72,85 @@ class ExpenseService {
     } catch (error) {
       print("Error fetching expenses: $error");
       return [];
+    }
+  }
+
+  List<Map<String, dynamic>> computeBalances({
+    required List<Map<String, dynamic>> expenses,
+    required List<Map<String, dynamic>> members,
+    required String currentUserId,
+  }) {
+    List<Map<String, dynamic>> result = [];
+    final nameById = <String,String>{};
+
+    for(final member in members){
+      final user = member['users'];
+      final id  = user['id'];
+
+      nameById[id] = user['name'];
+    }
+    final splitByIds = <String, List<String>>{};
+    final net = <String,double>{};
+    String? temp;
+
+    for(var expense in expenses){
+        final paidBy = expense['paid_by'];
+        if(paidBy == null) continue;
+        final splits = List<Map<String, dynamic>>.from(
+          expense['expense_splits'] ?? [],
+        );
+
+        for(final split in splits){
+          if(split['is_settled'] == true) continue;
+
+          final splitUser = split['user_id'];
+          final id = split['id'];
+          final a = split['amount'] as double ?? 0;
+
+          if(paidBy == splitUser) continue;
+          if(id == null || splitUser == null) continue;
+
+          if(paidBy == currentUserId){
+            net[splitUser] = (net[splitUser] ?? 0) + a;
+            temp = splitUser;
+          }else if(splitUser == currentUserId){
+            net[paidBy] = (net[paidBy] ?? 0) - a;
+            temp = paidBy;
+          }
+          if (temp != null) {
+            final ids = splitByIds[temp] ?? [];
+            ids.add(id);
+            splitByIds[temp] = ids;
+          }
+        }
+    }
+    for(final entry in net.entries){
+      final userid = entry.key;
+      final a = entry.value;
+
+      if(a < 0.0005) continue;
+
+      result.add({
+        'user_id': userid,
+        'name': nameById[userid] ?? 'Unknown',
+        'net_amount': a,
+        'split_ids': splitByIds[userid] ?? [],
+      });
+    }
+    return result;
+  }
+
+  Future<String> settleWithUser(List<String> splitIds) async {
+    if (splitIds.isEmpty) return "True";
+    try {
+      await supabase.from('expense_splits').update({
+        'is_settled': true,
+        'settled_at': DateTime.now().toIso8601String(),
+      }).inFilter('id', splitIds);
+
+      return "True";
+    } catch (error) {
+      return error.toString();
     }
   }
 }

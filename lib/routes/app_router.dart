@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/auth/auth.dart';
+import '../screens/expenses/settle_up_screen.dart';
 import '../screens/groups/group_screen.dart';
 import '../screens/groups/create_group_screen.dart';
 import '../screens/groups/group_details_screen.dart';
@@ -129,6 +130,16 @@ class AppRouter {
       context,
       ExpenseDetailsScreen(
           expense: expense, members: members, currentUserId: currentUserId),
+    );
+  }
+
+  static Future<dynamic> toSettleUp(BuildContext context, {
+    required Map<String, dynamic> group,
+    required List<Map<String, dynamic>> members,
+  }) {
+    return NavigationService.push(
+      context,
+      SettleUpScreen(group: group, members: members),
     );
   }
 }

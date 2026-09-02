@@ -48,8 +48,6 @@ class ExpenseDetailsScreen extends StatelessWidget {
       orElse: () => {},
     );
     final myShare = mySplit.isNotEmpty ? (mySplit['amount'] as num).toDouble() : 0.0;
-    final iPaid = expense['paid_by'] == currentUserId;
-    final netAmount = iPaid ? (totalAmount - myShare) : -myShare;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F3),
@@ -107,47 +105,6 @@ class ExpenseDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Net balance banner — what YOU owe or are owed for this expense
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: netAmount > 0
-                    ? const Color(0xFF2F9E8F).withOpacity(0.12)
-                    : netAmount < 0
-                    ? const Color(0xFFFF6452).withOpacity(0.12)
-                    : const Color(0xFFE4E0D5).withOpacity(0.4),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    netAmount > 0
-                        ? "You'll receive"
-                        : netAmount < 0
-                        ? "You owe"
-                        : "You're settled up",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: netAmount > 0
-                          ? const Color(0xFF1B5C53)
-                          : netAmount < 0
-                          ? const Color(0xFFE3492F)
-                          : const Color(0xFF5A6472),
-                    ),
-                  ),
-                  if (netAmount != 0)
-                    Text(
-                      "\$${netAmount.abs().toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: netAmount > 0 ? const Color(0xFF1B5C53) : const Color(0xFFE3492F),
-                      ),
-                    ),
-                ],
-              ),
-            ),
 
             const SizedBox(height: 24),
 
