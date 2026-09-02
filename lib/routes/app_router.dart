@@ -8,6 +8,7 @@ import '../services/navigation_service.dart';
 import '../screens/layout.dart';
 import '../screens/expenses/add_expense_screen.dart';
 import '../screens/expenses/expense_details_screen.dart';
+import '../screens/groups/group_members_screen.dart';
 
 class AppRouter {
 
@@ -92,6 +93,20 @@ class AppRouter {
     return NavigationService.push(
       context,
       GroupDetailsScreen(group: group),
+    );
+  }
+
+  static Future<dynamic> toGroupMembers(
+      BuildContext context, {
+        required Map<String, dynamic> group,
+        required String currentUserId,
+      }) {
+    return NavigationService.push(
+      context,
+      GroupMembersScreen(
+        group: group,
+        currentUserId: currentUserId,
+      ),
     );
   }
 
