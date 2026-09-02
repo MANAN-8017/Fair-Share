@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../widgets/widgets.dart';
 import 'home_screen.dart';
 import 'groups/group_screen.dart';
+import 'activity/activity_screen.dart';
 
 class Layout extends StatefulWidget {
   const Layout({super.key});
@@ -31,12 +32,11 @@ class _LayoutState extends State<Layout> {
         children: const [
           HomeScreen(),
           GroupScreen(),
-          Center(child: Text("Add")),
+          ActivityScreen(),
           Center(child: Text("Account")),
         ],
       ),
 
-      // NAVIGATION — Scaffold puts this at the bottom
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: const BoxDecoration(
@@ -63,8 +63,8 @@ class _LayoutState extends State<Layout> {
                   () => selectScreen(1),
             ),
             NavItem(
-              Icons.add,
-              "Add",
+              Icons.receipt_long,
+              "Activity",
               selected == 2,
                   () => selectScreen(2),
             ),

@@ -202,6 +202,32 @@ class ExpenseService {
         .toList();
   }
 
+  Future<double> calculateUserBalanceInGroup(String groupId, String userId) async {
+    final expenses = await getGroupExpenses(groupId);
+    double netBalance = 0.0;
+
+    for (var expense in expenses) {
+      final paidBy = expense['paid_by'];
+      if (paidBy == null) continue;
+
+      final splits = List<Map<String, dynamic>>.from(expense['expense_splits'] ?? []);
+
+      for (final split in splits) {
+        if (split['is_settled'] == true) continue;
+
+        final splitUserId = split['user_id'];
+        final amount = (split['amount'] as num).toDouble();
+
+        if (paidBy == userId && splitUserId != userId) {
+          netBalance += amount;
+        } else if (paidBy != userId && splitUserId == userId) {
+          netBalance -= amount;
+        }
+      }
+    }
+    return netBalance;
+  }
+
   Future<String> settleWithUser(List<String> splitIds) async {
     if (splitIds.isEmpty) return "True";
     try {
