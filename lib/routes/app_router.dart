@@ -6,6 +6,7 @@ import '../screens/groups/group_screen.dart';
 import '../screens/groups/create_group_screen.dart';
 import '../screens/groups/group_details_screen.dart';
 import '../services/navigation_service.dart';
+import '../screens/layout.dart';
 
 class AppRouter {
 
@@ -56,13 +57,17 @@ class AppRouter {
     );
   }
 
+  static Future<void> toLayout(BuildContext context, {int delay = 0,}) {
+    return NavigationService.clearAndNavigate(context, const Layout(), delay: delay);
+  }
+
   static Future<void> toHome(
       BuildContext context, {
         int delay = 0,
       }) {
     return NavigationService.clearAndNavigate(
       context,
-      const HomeScreen(),
+      const Layout(),
       delay: delay,
     );
   }
@@ -73,7 +78,7 @@ class AppRouter {
       }) {
     return NavigationService.push(
       context,
-      const GroupsScreen(),
+      const GroupScreen(),
     );
   }
 

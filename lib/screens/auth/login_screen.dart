@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (response == "True") {
-      AppRouter.toHome(context, delay: 2);
+      AppRouter.toLayout(context, delay: 2);
     }
     else {
       setState(() {

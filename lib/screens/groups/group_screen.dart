@@ -3,14 +3,14 @@ import '../../routes/routes.dart';
 import '../../services/services.dart';
 import '../../widgets/widgets.dart';
 
-class GroupsScreen extends StatefulWidget {
-  const GroupsScreen({super.key});
+class GroupScreen extends StatefulWidget {
+  const GroupScreen({super.key});
 
   @override
-  State<GroupsScreen> createState() => _GroupsScreenState();
+  State<GroupScreen> createState() => _GroupScreenState();
 }
 
-class _GroupsScreenState extends State<GroupsScreen> {
+class _GroupScreenState extends State<GroupScreen> {
   final AuthService authService = AuthService();
 
   bool isLoading = false;
@@ -256,43 +256,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         ),
                       );
                     },
-                  ),
-                ),
-
-                // Bottom nav
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: Color(0xFFE4E0D5),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          AppRouter.toHome(context);
-                        },
-                        child: NavItem(Icons.home_outlined, "Home", false),
-                      ),
-                      NavItem(Icons.people_outline, "Groups", true),
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () async {
-                          final result = await AppRouter.toCreateGroup(context);
-                          if (result == true) {
-                            setState(() { isLoadingGroups = true; });
-                            loadGroups();
-                          }
-                        },
-                        child: NavItem(Icons.add, "Add", false),
-                      ),
-                      NavItem(Icons.person_outline, "Account", false),
-                    ],
                   ),
                 ),
               ],

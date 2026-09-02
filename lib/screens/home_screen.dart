@@ -86,18 +86,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F3),
-      body: SafeArea(
+    return SafeArea(
         child: Column(
           children: [
-            // Everything above bottom navigation
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   children: [
 
-                    // Top section
                     Padding(
                       padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
                       child:
@@ -328,46 +324,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
-            // Fixed bottom navigation
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: const BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Color(0xFFE4E0D5),
-                  ),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  NavItem(Icons.home_outlined, "Home", true),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () {
-                      AppRouter.toGroups(context);
-                    },
-                    child: NavItem(Icons.people_outline, "Groups", false),
-                  ),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () async {
-                        final result = await AppRouter.toCreateGroup(context);
-
-                        if (result == true) {
-                          setState(() {
-                            isLoadingGroups = true;
-                          });
-                          loadGroups();
-                        }
-                      },
-                    child: NavItem(Icons.add, "Add", false),
-                  ),
-                  NavItem(Icons.person_outline, "Account", false),
-                ],
-              ),
-            ),
             if (isLoading)
               Container(
                 color: const Color(0xFFFAF8F3),
@@ -377,7 +333,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
           ],
         ),
-      ),
     );
   }
 }
