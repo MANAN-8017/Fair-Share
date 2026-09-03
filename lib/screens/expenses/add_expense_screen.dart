@@ -78,7 +78,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       if ((total - _amount).abs() > 0.01) {
         AppSnackBar.error(
           context,
-          "Split amounts must add up to \$${_amount.toStringAsFixed(2)} (currently \$${total.toStringAsFixed(2)}).",
+          "Split amounts must add up to ₹${_amount.toStringAsFixed(2)} (currently ₹${total.toStringAsFixed(2)}).",
         );
         return;
       }
@@ -138,7 +138,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: "Amount",
-                prefixText: "\$ ",
+                prefixText: "₹ ",
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
@@ -205,7 +205,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
             RadioListTile<String>(
               contentPadding: EdgeInsets.zero,
-              title: const Text("Unequally (\$ amounts)"),
+              title: const Text("Unequally (₹ amounts)"),
               value: 'unequal',
               groupValue: splitType,
               onChanged: (value) => setState(() => splitType = value!),
@@ -222,7 +222,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 4, bottom: 8),
                 child: Text(
-                  "\$${(_amount / widget.members.length).toStringAsFixed(2)} per person",
+                  "₹${(_amount / widget.members.length).toStringAsFixed(2)} per person",
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               ),
@@ -240,7 +240,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
                       labelText: label,
-                      prefixText: splitType == 'percent' ? null : "\$ ",
+                      prefixText: splitType == 'percent' ? null : "₹ ",
                       suffixText: splitType == 'percent' ? "%" : null,
                       border: const OutlineInputBorder(),
                     ),

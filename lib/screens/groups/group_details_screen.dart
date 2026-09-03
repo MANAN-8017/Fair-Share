@@ -346,7 +346,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           ),
 
                           Text(
-                            "\$${amount.toStringAsFixed(2)}",
+                            "₹${amount.toStringAsFixed(2)}",
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

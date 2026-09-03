@@ -98,7 +98,7 @@ class ExpenseDetailsScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             Text(
-              "\$${(expense['amount'] as num).toStringAsFixed(2)}",
+              "₹${(expense['amount'] as num).toStringAsFixed(2)}",
               style: TextStyle(fontSize: 34, fontWeight: FontWeight.w800, color: color),
             ),
 
@@ -150,7 +150,7 @@ class ExpenseDetailsScreen extends StatelessWidget {
                         style: const TextStyle(color: Color(0xFF9AA2AC), fontSize: 13),
                       ),
                     Text(
-                      "\$${splitAmount.toStringAsFixed(2)}",
+                      "₹${splitAmount.toStringAsFixed(2)}",
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF17202B)),
                     ),
                   ],

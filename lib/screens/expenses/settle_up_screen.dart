@@ -57,8 +57,8 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
         title: const Text("Settle Up"),
         content: Text(
           theyOweYou
-              ? "Mark that $name paid you \$${amount.toStringAsFixed(2)}?"
-              : "Mark that you paid $name \$${amount.toStringAsFixed(2)}?",
+              ? "Mark that $name paid you ₹${amount.toStringAsFixed(2)}?"
+              : "Mark that you paid $name ₹${amount.toStringAsFixed(2)}?",
         ),
         actions: [
           TextButton(
@@ -143,7 +143,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
                     children: [
                       TextSpan(text: owed ? "You are owed " : "You owe "),
                       TextSpan(
-                        text: "\$${overall.abs().toStringAsFixed(2)}",
+                        text: "₹${overall.abs().toStringAsFixed(2)}",
                         style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 17),
                       ),
                       const TextSpan(text: " overall"),
@@ -164,7 +164,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
               iconColor: color,
               title: name,
               subtitle: theyOweYou ? "Owes you" : "You owe",
-              amount: "\$${netAmount.abs().toStringAsFixed(2)}",
+              amount: "₹${netAmount.abs().toStringAsFixed(2)}",
               onTap: () => _confirmAndSettle(balance),
             );
           },

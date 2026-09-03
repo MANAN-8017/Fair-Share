@@ -8,72 +8,114 @@ class Debt {
   final String to;
   final double netAmount;
 
-  Debt({
-    required this.from,
-    required this.to,
-    required this.netAmount,
-  });
+  Debt({required this.from, required this.to, required this.netAmount});
 }
 
 class DebtSimplificationService {
   final SupabaseClient supabase = Supabase.instance.client;
   DebtSimplificationService._internal();
 
-  static final DebtSimplificationService _instance = DebtSimplificationService._internal();
+  static final DebtSimplificationService _instance =
+      DebtSimplificationService._internal();
 
-  factory DebtSimplificationService(){
+  factory DebtSimplificationService() {
     return _instance;
   }
-  
+
   final GroupService groupService = GroupService();
   final ExpenseService expenseService = ExpenseService();
 
   Future<List<Debt>> simplify(String id) async {
     try {
       final transactions = <Debt>[];
-        final members = await groupService.getGroupMembers(id.toString());
-        final expenses = await expenseService.getGroupExpenses(id.toString());
 
-        final users = expenseService.computeGroupNetBalances(expenses: expenses, members: members);
+      final members = await groupService.getGroupMembers(id);
 
-        final creditors = users.where((credit) => credit['netAmount'] > 0).toList();
-        final debtors = users.where((debit) => debit['netAmount'] < 0).toList();
+      final expenses = await expenseService.getGroupExpenses(id);
 
-        creditors.sort((a, b) => b['netAmount'].compareTo(a['netAmount']));
-        debtors.sort((a, b) => a['netAmount'].compareTo(b['netAmount']));
+      final users = expenseService.computeGroupNetBalances(
+        expenses: expenses,
+        members: members,
+      );
 
-        int creditorIndex = 0;
-        int debtorIndex = 0;
+      final creditors = users
+          .map(
+            (user) => {
+              ...user,
+              'netAmount': (user['netAmount'] as num?)?.toDouble() ?? 0.0,
+            },
+          )
+          .where((user) => user['netAmount'] > 0.0005)
+          .toList();
 
-        while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
-          final creditor = creditors[creditorIndex];
-          final debtor = debtors[debtorIndex];
+      final debtors = users
+          .map(
+            (user) => {
+              ...user,
+              'netAmount': (user['netAmount'] as num?)?.toDouble() ?? 0.0,
+            },
+          )
+          .where((user) => user['netAmount'] < -0.0005)
+          .toList();
 
-          final amount = min(creditor['netAmount'], debtor['netAmount'].abs());
+      creditors.sort(
+        (a, b) =>
+            (b['netAmount'] as double).compareTo(a['netAmount'] as double),
+      );
 
-          transactions.add(
-            Debt(
-              from: debtor['userId'],
-              to: creditor['userId'],
-              netAmount: amount.toDouble(),
-            )
-          );
+      debtors.sort(
+        (a, b) =>
+            (a['netAmount'] as double).compareTo(b['netAmount'] as double),
+      );
 
-          creditor['netAmount'] -= amount;
-          debtor['netAmount'] += amount;
+      int creditorIndex = 0;
+      int debtorIndex = 0;
 
-          if (creditor['netAmount'] < 0.01) {
-            creditorIndex++;
-          }
+      while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
+        final creditor = creditors[creditorIndex];
+        final debtor = debtors[debtorIndex];
 
-          if (debtor['netAmount'].abs() < 0.01) {
-            debtorIndex++;
-          }
+        final creditorAmount =
+            (creditor['netAmount'] as num?)?.toDouble() ?? 0.0;
+
+        final debtorAmount = (debtor['netAmount'] as num?)?.toDouble() ?? 0.0;
+
+        final amount = min(creditorAmount, debtorAmount.abs());
+
+        if (amount < 0.0005) {
+          break;
         }
+
+        transactions.add(
+          Debt(
+            from: debtor['userId'] as String,
+            to: creditor['userId'] as String,
+            netAmount: amount,
+          ),
+        );
+
+        creditor['netAmount'] = creditorAmount - amount;
+
+        debtor['netAmount'] = debtorAmount + amount;
+
+        final remainingCredit =
+            (creditor['netAmount'] as num?)?.toDouble() ?? 0.0;
+
+        final remainingDebt = (debtor['netAmount'] as num?)?.toDouble() ?? 0.0;
+
+        if (remainingCredit.abs() < 0.01) {
+          creditorIndex++;
+        }
+
+        if (remainingDebt.abs() < 0.01) {
+          debtorIndex++;
+        }
+      }
+
       return transactions;
-    }
-    catch (error) {
+    } catch (error) {
       print('Debt simplification error: $error');
+
       return [];
     }
   }
