@@ -188,7 +188,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: const Color(0xFF2F9E8F).withOpacity(0.2),
+                    backgroundColor: const Color(0xFF2F9E8F).withValues(alpha: 0.2),
                     child: Text(
                       userRecord['name'].toString().substring(0, 1).toUpperCase(),
                       style: const TextStyle(color: Color(0xFF1B5C53), fontWeight: FontWeight.bold),
@@ -210,7 +210,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                                 margin: const EdgeInsets.only(left: 8),
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6452).withOpacity(0.1),
+                                  color: const Color(0xFFFF6452).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(

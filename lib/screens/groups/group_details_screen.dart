@@ -157,6 +157,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   Widget _buildBalanceSummary() {
     final currentBalances = balances;
 
+    final overall = currentBalances.fold<double>(
+      0,
+          (sum, b) => sum + ((b['net_amount'] as num?)?.toDouble() ?? 0.0),
+    );
+
     if (currentBalances.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 22),
@@ -187,11 +192,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     // NORMAL BALANCE
     final currentUserBalance = currentBalances.firstWhere(
           (b) => b['userId'] == currentUserId,
-      orElse: () => {'netAmount': 0.0},
+      orElse: () => {'net_amount': 0.0},
     );
-
-    final overall =
-        (currentUserBalance['netAmount'] as num?)?.toDouble() ?? 0.0;
 
     // SIMPLIFIED BALANCE
     double simplifiedOverall = 0.0;
@@ -199,10 +201,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     for (final debt in transactions) {
       if (debt.from == currentUserId) {
         // You have to pay this amount
-        simplifiedOverall -= debt.netAmount;
+        simplifiedOverall -= debt.net_amount;
       } else if (debt.to == currentUserId) {
         // You receive this amount
-        simplifiedOverall += debt.netAmount;
+        simplifiedOverall += debt.net_amount;
       }
     }
 
@@ -304,66 +306,58 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                     ),
                   )
-                else
-                  ...transactions.map((debt) {
+                  else
+              ...transactions.map((debt) {
+  final amount = debt.net_amount;
 
-                    final isCurrentUserDebtor =
-                        debt.from == currentUserId;
+  final isReceiving = debt.to == currentUserId;
 
-                    final isCurrentUserCreditor =
-                        debt.to == currentUserId;
+  final otherUserId = isReceiving
+      ? debt.from
+      : debt.to;
 
-                    // Only show transactions involving current user.
-                    if (!isCurrentUserDebtor &&
-                        !isCurrentUserCreditor) {
-                      return const SizedBox.shrink();
-                    }
+  return Padding(
+    padding: const EdgeInsets.only(top: 6),
+    child: Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          color: const Color(0xFFE4E0D5),
+        ),
+        const SizedBox(width: 10),
 
-                    final amount = debt.netAmount;
+        Expanded(
+          child: Text(
+            isReceiving
+                ? "${_getMemberName(otherUserId)} owes you"
+                : "You owe ${_getMemberName(otherUserId)}",
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF5A6472),
+            ),
+          ),
+        ),
 
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 3,
-                            height: 14,
-                            color: const Color(0xFFE4E0D5),
-                          ),
-
-                          const SizedBox(width: 10),
-
-                          Expanded(
-                            child: Text(
-                              isCurrentUserDebtor
-                                  ? "You owe ${_getMemberName(debt.to)}"
-                                  : "${_getMemberName(debt.from)} owes you",
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF5A6472),
-                              ),
-                            ),
-                          ),
-
-                          Text(
-                            "₹${amount.toStringAsFixed(2)}",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isCurrentUserDebtor
-                                  ? const Color(0xFFFF6452)
-                                  : const Color(0xFF2F9E8F),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  })
+        Text(
+          "₹${amount.toStringAsFixed(2)}",
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isReceiving
+                ? const Color(0xFF2F9E8F)
+                : const Color(0xFFFF6452),
+          ),
+        ),
+      ],
+    ),
+  );
+})
 
               else
               // ORIGINAL BALANCES
                 ...currentBalances.map((b) {
-                  final netAmount = (b['netAmount'] as num?)?.toDouble() ?? 0.0;
+                  final netAmount = (b['net_amount'] as num?)?.toDouble() ?? 0.0;
 
                   final theyOweYou = netAmount > 0;
 
@@ -717,7 +711,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         color: Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFF17202B).withOpacity(0.3),
+                          color: const Color(0xFF17202B).withValues(alpha: 0.3),
                         ),
                       ),
                       // View members button
@@ -773,7 +767,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           onChanged: _isSimplifying
                               ? null
                               : _toggleSimplify,
-                          activeColor: const Color(0xFF2F9E8F),
+                          activeThumbColor: const Color(0xFF2F9E8F),
                           inactiveThumbColor: const Color(0xFF9AA2AC),
                           inactiveTrackColor: const Color(0xFFE4E0D5),
                         ),
@@ -853,11 +847,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       expense['users']
                       as Map<String,
                           dynamic>?;
-
-                      final amount =
-                      (expense['amount']
-                      as num)
-                          .toDouble();
+final amount =
+    (expense['amount'] as num?)?.toDouble() ?? 0.0;
 
                       return ActivityRow(
                         icon:

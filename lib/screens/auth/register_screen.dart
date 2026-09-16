@@ -47,19 +47,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (response == "True") {
-      AppRouter.toLogin(
-        context,
-        successMessage: "Account created successfully.",
-      );
+      AppRouter.toLogin(context, successMessage: "Account created successfully.");
     } else {
       setState(() {
         isLoading = false;
       });
 
-      AppSnackBar.error(
-        context,
-        response.toString(),
-      );
+      AppSnackBar.error(context, response.toString());
     }
   }
 
@@ -85,7 +79,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-
                 // Back
                 Align(
                   alignment: Alignment.centerLeft,
@@ -103,9 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     tooltip: "Back",
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 // Heading
                 const Text(
                   "Split bills without\nthe awkward math.",
@@ -116,9 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Color(0xFF17202B),
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 const Text(
                   "Set up your account in under a minute.",
                   style: TextStyle(
@@ -126,9 +115,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: Color(0xFF5A6472),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 // Name
                 TextFormField(
                   controller: nameController,
@@ -150,9 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 // Email
                 TextFormField(
                   controller: emailController,
@@ -175,9 +160,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 // Phone number
                 TextFormField(
                   controller: phoneNumberController,
@@ -200,9 +183,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 // Password
                 TextFormField(
                   controller: passwordController,
@@ -237,9 +218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 // Confirm Password
                 TextFormField(
                   controller: confirmPasswordController,
@@ -274,9 +253,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 18),
-
                 // Register
                 SizedBox(
                   height: 50,
@@ -305,7 +282,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
                 // Login
                 Row(

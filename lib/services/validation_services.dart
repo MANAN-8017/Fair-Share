@@ -1,13 +1,7 @@
 enum ValidationType { required, name, email, phone, password, confirmPassword }
 
 class ValidationService {
-  static String? validate(
-      String value, {
-        required ValidationType type,
-        String? compareValue,
-        int? minLength,
-        int? maxLength,
-      }) {
+  static String? validate(String value, {required ValidationType type, String? compareValue, int? minLength, int? maxLength}) {
     value = value.trim();
 
     switch (type) {

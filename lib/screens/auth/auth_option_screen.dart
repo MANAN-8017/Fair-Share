@@ -17,13 +17,8 @@ class AuthOptionScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-
-              // Logo
               FairShareLogo(size: logoSize),
-
               const SizedBox(height: 25),
-
-              // Heading
               const Text(
                 "Welcome to FairShare",
                 textAlign: TextAlign.center,
@@ -33,10 +28,7 @@ class AuthOptionScreen extends StatelessWidget {
                   color: Color(0xFF17202B),
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // Description
               const Text(
                 "Split expenses. Track balances.\nKeep friendships simple.",
                 textAlign: TextAlign.center,
@@ -46,10 +38,7 @@ class AuthOptionScreen extends StatelessWidget {
                   color: Color(0xFF5A6472),
                 ),
               ),
-
               const Spacer(),
-
-              // Login
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -72,10 +61,7 @@ class AuthOptionScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 14),
-
-              // Register
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -99,12 +85,8 @@ class AuthOptionScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               const Spacer(flex: 2),
-
-              // Footer
               const Text(
                 "FairShare • Simple expense sharing",
                 style: TextStyle(
@@ -112,7 +94,6 @@ class AuthOptionScreen extends StatelessWidget {
                   color: Color(0xFF9AA2AC),
                 ),
               ),
-
               const SizedBox(height: 20),
             ],
           ),

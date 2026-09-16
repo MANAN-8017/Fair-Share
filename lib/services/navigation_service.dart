@@ -2,81 +2,37 @@ import 'package:flutter/material.dart';
 
 class NavigationService {
 
-  static Future<void> navigateAfterDelay(
-      BuildContext context,
-      Widget screen,
-      int delay,
-      ) async {
+  static Future<void> navigateAfterDelay(BuildContext context, Widget screen, int delay) async {
     if (delay > 0) {
-      await Future.delayed(
-        Duration(seconds: delay),
-      );
+      await Future.delayed(Duration(seconds: delay));
     }
-
     if (!context.mounted) return;
-
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => screen,
-      ),
-    );
+    await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => screen));
   }
 
-  static Future<dynamic> push(
-      BuildContext context,
-      Widget screen,
-      ) async {
+  static Future<dynamic> push(BuildContext context, Widget screen) async {
     if(!context.mounted) return;
 
-    return await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => screen,
-      )
-    );
+    return await Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
   }
 
-  static Future<void> replace(
-      BuildContext context,
-      Widget screen, {
-        int delay = 0,
-      }) async {
+  static Future<void> replace(BuildContext context, Widget screen, {int delay = 0}) async {
     if (delay > 0) {
-      await Future.delayed(
-        Duration(seconds: delay),
-      );
+      await Future.delayed(Duration(seconds: delay));
     }
 
     if (!context.mounted) return;
 
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => screen,
-      ),
-    );
+    await Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => screen));
   }
 
-  static Future<void> clearAndNavigate(
-      BuildContext context,
-      Widget screen, {
-        int delay = 0,
-      }) async {
+  static Future<void> clearAndNavigate(BuildContext context, Widget screen, {int delay = 0}) async {
     if (delay > 0) {
-      await Future.delayed(
-        Duration(seconds: delay),
-      );
+      await Future.delayed(Duration(seconds: delay));
     }
 
     if (!context.mounted) return;
 
-    await Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => screen,
-      ),
-          (route) => false,
-    );
+    await Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => screen), (route) => false);
   }
 }

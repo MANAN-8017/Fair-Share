@@ -76,67 +76,73 @@ class ExpenseService {
   }
 
   List<Map<String, dynamic>> computeBalances({
-    required List<Map<String, dynamic>> expenses,
-    required List<Map<String, dynamic>> members,
-    required String currentUserId,
+  required List<Map<String, dynamic>> expenses,
+  required List<Map<String, dynamic>> members,
+  required String currentUserId,
   }) {
-    List<Map<String, dynamic>> result = [];
-    final nameById = <String,String>{};
+  final nameById = <String, String>{};
+  for (final member in members) {
+    final user = member['users'] as Map<String, dynamic>;
+    nameById[user['id']] = user['name'] ?? 'Unknown';
+  }
 
-    for(final member in members){
-      final user = member['users'];
-      final id  = user['id'];
 
-      nameById[id] = user['name'];
-    }
-    final splitByIds = <String, List<String>>{};
-    final net = <String,double>{};
+  final netByUser = <String, double>{};
+  final splitIdsByUser = <String, List<String>>{};
 
-    for(var expense in expenses){
-      final paidBy = expense['paid_by'];
-      if(paidBy == null) continue;
-      final splits = List<Map<String, dynamic>>.from(
-        expense['expense_splits'] ?? [],
-      );
 
-      for(final split in splits){
-        if(split['is_settled'] == true) continue;
+  for (final expense in expenses) {
+    final paidBy = expense['paid_by'] as String?;
+    final splits = List<Map<String, dynamic>>.from(expense['expense_splits'] ?? []);
+    if (paidBy == null) continue;
 
-        final splitUser = split['user_id'];
-        final id = split['id'];
-        final a = (split['amount'] as num?)?.toDouble() ?? 0.0;
 
-        String? otherUser;
+    for (final split in splits) {
+      if (split['is_settled'] == true) continue;
 
-        if (paidBy == currentUserId) {
-          otherUser = splitUser;
-          net[splitUser] = (net[splitUser] ?? 0.0) + a;
-        } else if (splitUser == currentUserId) {
-          otherUser = paidBy;
-          net[paidBy] = (net[paidBy] ?? 0.0) - a;
-        }
 
-        if (otherUser != null) {
-          final ids = splitByIds[otherUser] ?? [];
-          ids.add(id);
-          splitByIds[otherUser] = ids;
-        }
+      final splitUser = split['user_id'] as String?;
+      final amount = (split['amount'] as num?)?.toDouble() ?? 0;
+      final splitId = split['id'] as String?;
+      if (splitUser == null || splitId == null) continue;
+      if (splitUser == paidBy) continue; // own share, not a debt
+
+
+      String? other;
+      if (paidBy == currentUserId) {
+        // splitUser owes currentUser
+        other = splitUser;
+        netByUser[other] = (netByUser[other] ?? 0) + amount;
+      } else if (splitUser == currentUserId) {
+        // currentUser owes paidBy
+        other = paidBy;
+        netByUser[other] = (netByUser[other] ?? 0) - amount;
+      }
+
+
+      if (other != null) {
+        final ids = splitIdsByUser[other] ?? [];
+        ids.add(splitId);
+        splitIdsByUser[other] = ids;
       }
     }
-    for(final entry in net.entries){
-      final userid = entry.key;
-      final a = entry.value;
+  }
 
-      if(a.abs() < 0.0005) continue;
 
-      result.add({
-        'user_id': userid,
-        'name': nameById[userid] ?? 'Unknown',
-        'netAmount': a,
-        'split_ids': splitByIds[userid] ?? [],
-      });
-    }
-    return result;
+  final balances = <Map<String, dynamic>>[];
+  netByUser.forEach((userId, net) {
+    if (net.abs() < 0.005) return;
+    balances.add({
+      'user_id': userId,
+      'name': nameById[userId] ?? 'Unknown',
+      'net_amount': net,
+      'split_ids': splitIdsByUser[userId] ?? [],
+    });
+  });
+
+
+  balances.sort((a, b) => (b['net_amount'] as double).abs().compareTo((a['net_amount'] as double).abs()));
+  return balances;
   }
 
   List<Map<String, dynamic>> computeGroupNetBalances({
@@ -196,7 +202,7 @@ class ExpenseService {
       return {
         'userId': entry.key,
         'name': nameById[entry.key] ?? 'Unknown',
-        'netAmount': entry.value,
+        'net_amount': entry.value,
       };
     })
         .toList();

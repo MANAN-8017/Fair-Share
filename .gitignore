@@ -1,3 +1,5 @@
+algo.c
+
 # Dart / Flutter
 .dart_tool/
 .packages
@@ -27,6 +29,7 @@ android/captures/
 android/app/debug/
 android/app/profile/
 android/app/release/
+android/.kotlin/
 *.jks
 *.keystore
 

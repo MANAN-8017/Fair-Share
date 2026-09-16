@@ -22,15 +22,9 @@ class _LoadingScreenState extends State<LoadingScreen>{
       if (!mounted) return;
 
       if (authService.isLoggedIn) {
-        AppRouter.toHome(
-          context,
-          delay: 2,
-        );
+        AppRouter.toHome(context, delay: 2);
       } else {
-        AppRouter.toAuthOption(
-          context,
-          delay: 2,
-        );
+        AppRouter.toAuthOption(context, delay: 2);
       }
     });
   }
@@ -68,7 +62,6 @@ class _LoadingScreenState extends State<LoadingScreen>{
                 ),
               ),
             ),
-
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -77,7 +70,6 @@ class _LoadingScreenState extends State<LoadingScreen>{
                   Builder(
                     builder: (context) {
                       final logoSize = MediaQuery.of(context).size.width * 0.25;
-
                       return SizedBox(
                         width: logoSize,
                         height: logoSize,
@@ -112,9 +104,7 @@ class _LoadingScreenState extends State<LoadingScreen>{
                       );
                     },
                   ),
-
                   const SizedBox(height: 18),
-
                   // App name
                   Text(
                     "Fair Share",
@@ -125,9 +115,7 @@ class _LoadingScreenState extends State<LoadingScreen>{
                       letterSpacing: -0.3,
                     ),
                   ),
-
                   const SizedBox(height: 10),
-
                   // Subtitle
                   Text(
                     "SETTLING THE MATH…",
@@ -138,15 +126,9 @@ class _LoadingScreenState extends State<LoadingScreen>{
                       fontFamily: "monospace",
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
                   // Three-dot loader
-                  const LoadingDots(
-                    color: Color(0xFFFF6452),
-                    size: 8,
-                    spacing: 8,
-                  )
+                  const LoadingDots(color: Color(0xFFFF6452), size: 8, spacing: 8)
                 ],
               ),
             ),
