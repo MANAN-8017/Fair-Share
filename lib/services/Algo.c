@@ -18,12 +18,6 @@ Transaction transactions[100] = {
 };
 int size = 7;
 
-void printTransactions(Transaction transactions[], int size){
-    printf("\nTransactions:\n");
-    for(int i=0;i<size;i++)
-        printf("%d -> %d : %.2f\n", transactions[i].debtorId, transactions[i].creditorId, transactions[i].amount);
-}
-
 void calculateBalances(double balance[], int maxUsers){
     for(int i=0;i<maxUsers;i++)
         balance[i] = 0;
@@ -83,12 +77,6 @@ void simplifyDebts(double balance[], int maxUsers){
     }
 }
 
-void printBalances(double balance[], int maxUsers) {
-    printf("\nNet Balances:\n");
-    for (int i=1;i<maxUsers;i++)
-        printf("User %d : %.2f\n", i, balance[i]);
-}
-
 int main() {
     int maxUsers = 6;
     double balance[6];
@@ -103,4 +91,16 @@ int main() {
     printTransactions(simplified, simplifiedSize);
 
     return 0;
+}
+
+void printTransactions(Transaction transactions[], int size){
+    printf("\nTransactions:\n");
+    for(int i=0;i<size;i++)
+        printf("%d -> %d : %.2f\n", transactions[i].debtorId, transactions[i].creditorId, transactions[i].amount);
+}
+
+void printBalances(double balance[], int maxUsers) {
+    printf("\nNet Balances:\n");
+    for (int i=1;i<maxUsers;i++)
+        printf("User %d : %.2f\n", i, balance[i]);
 }

@@ -3,73 +3,82 @@ import 'package:fair_share/services/expense_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'group_service.dart';
 
-class Debt {
-  final String from;
-  final String to;
-  final double net_amount;
-  Debt({required this.from, required this.to, required this.net_amount});
+class Debt{
+  String debtorId;
+  String creditorId;
+  double amount;
+  Debt({required this.debtorId, required this.creditorId, required this.amount});
 }
 
-class DebtSimplificationService {
+class DebtSimplificationService{
   final SupabaseClient supabase = Supabase.instance.client;
   DebtSimplificationService._internal();
   static final DebtSimplificationService _instance = DebtSimplificationService._internal();
-  factory DebtSimplificationService() {
-    return _instance;
-  }
+
+  factory DebtSimplificationService(){ return _instance; }
+
   final GroupService groupService = GroupService();
   final ExpenseService expenseService = ExpenseService();
 
-  Future<List<Debt>> simplify(String id) async {
-    try {
-      final transactions = <Debt>[];
-      final members = await groupService.getGroupMembers(id);
-      final expenses = await expenseService.getGroupExpenses(id);
-      final users = expenseService.computeGroupNetBalances(expenses: expenses, members: members);
+  Future<List<Debt>> simplify(String groupId, {List<Map<String, dynamic>>? members, List<Map<String, dynamic>>? expenses}) async {
+    try{
+      final resolvedMembers = members ?? await groupService.getGroupMembers(groupId);
+      final resolvedExpenses = expenses ?? await expenseService.getGroupExpenses(groupId);
 
-      final creditors = users.map((user) => {...user, 'net_amount': (user['net_amount'] as num?)?.toDouble() ?? 0.0})
-          .where((user) => user['net_amount'] > 0.0)
-          .toList();
+      final users = expenseService.computeGroupNetBalances(expenses: resolvedExpenses, members: resolvedMembers);
+      final balances = <String, double>{};
 
-      final debtors = users.map((user) => {...user, 'net_amount': (user['net_amount'] as num?)?.toDouble() ?? 0.0})
-          .where((user) => user['net_amount'] < -0.0)
-          .toList();
+      for (final user in users){
+        final userId = user['userId'] as String;
+        final netAmount = (user['net_amount'] as num?)?.toDouble() ?? 0.0;
+        if (netAmount.abs() > 0.0) {
+          balances[userId] = netAmount;
+        }
+      }
+      final simplified = <Debt>[];
 
-      creditors.sort((a, b) => (b['net_amount'] as double).compareTo(a['net_amount'] as double));
-      debtors.sort((a, b) => (a['net_amount'] as double).compareTo(b['net_amount'] as double));
+      while(true){
+        String? debtorId, creditorId;
+        double maxDebt = 0.0, maxCredit = 0.0;
 
-      int creditorIndex = 0;
-      int debtorIndex = 0;
+        for (final entry in balances.entries){
+          final userId = entry.key;
+          final balance = entry.value;
 
-      while (creditorIndex < creditors.length && debtorIndex < debtors.length) {
-        final creditor = creditors[creditorIndex];
-        final debtor = debtors[debtorIndex];
-        final creditorAmount = (creditor['net_amount'] as num?)?.toDouble() ?? 0.0;
-        final debtorAmount = (debtor['net_amount'] as num?)?.toDouble() ?? 0.0;
-        final amount = min(creditorAmount, debtorAmount.abs());
+          if (balance < 0 && balance.abs() > maxDebt) {
+            maxDebt = balance.abs();
+            debtorId = userId;
+          }
+        }
 
-        if (amount < 0.0) {
+        for (final entry in balances.entries){
+          final userId = entry.key;
+          final balance = entry.value;
+
+          if (balance > 0 && balance > maxCredit) {
+            maxCredit = balance;
+            creditorId = userId;
+          }
+        }
+
+        if (debtorId == null || creditorId == null) {
           break;
         }
 
-        transactions.add(Debt(from: debtor['userId'] as String, to: creditor['userId'] as String, net_amount: amount));
-        creditor['net_amount'] = creditorAmount - amount;
-        debtor['net_amount'] = debtorAmount + amount;
+        final amount = min(maxDebt, maxCredit);
 
-        final remainingCredit = (creditor['net_amount'] as num?)?.toDouble() ?? 0.0;
-        final remainingDebt = (debtor['net_amount'] as num?)?.toDouble() ?? 0.0;
-        const epsilon = 0.01; // or whatever precision you're working with
+        simplified.add(Debt(debtorId: debtorId, creditorId: creditorId, amount: amount));
 
-        if (remainingCredit.abs() < epsilon) {
-          creditorIndex++;
-        }
-        if (remainingDebt.abs() < epsilon) {
-          debtorIndex++;
-        }
+        balances[debtorId] = balances[debtorId]! + amount;
+        balances[creditorId] = balances[creditorId]! - amount;
+        balances.removeWhere((userId, balance) => balance.abs() < 0.0);
       }
-      return transactions;
+
+      String currentUserId = supabase.auth.currentUser!.id;
+      simplified.removeWhere((s) => s.debtorId.compareTo(currentUserId) != 0 && s.creditorId.compareTo(currentUserId) != 0);
+
+      return simplified;
     } catch (error) {
-      print('Debt simplification error: $error');
       return [];
     }
   }
