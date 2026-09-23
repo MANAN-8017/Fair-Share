@@ -288,4 +288,32 @@ class ExpenseService {
       return error.toString();
     }
   }
+
+  Future<List<Map<String, dynamic>>> getRecentActivity() async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return [];
+
+      final groupResponse = await supabase
+          .from('group_members')
+          .select('group_id')
+          .eq('user_id', user.id);
+
+      final groupIds = List<String>.from(groupResponse.map((g) => g['group_id'].toString()));
+
+      if (groupIds.isEmpty) return [];
+
+      final response = await supabase
+          .from('expenses')
+          .select('*, users!expenses_paid_by_fkey(id, name), groups(name), expense_splits(id, user_id, amount, percentage, is_settled, settled_at)')
+          .inFilter('group_id', groupIds)
+          .order('created_at', ascending: false)
+          .limit(20);
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      print("Error fetching recent activity: $error");
+      return [];
+    }
+  }
 }
