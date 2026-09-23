@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../screens/groups/group_transactions_screen.dart';
 import '../screens/auth/auth.dart';
 import '../screens/expenses/settle_up_screen.dart';
 import '../screens/groups/group_screen.dart';
@@ -56,6 +56,24 @@ class AppRouter {
         required String currentUserId,
       }) {
     return NavigationService.push(context, GroupMembersScreen(group: group,currentUserId: currentUserId),
+    );
+  }
+
+  static Future<dynamic> toGroupTransactions(
+      BuildContext context, {
+        required Map<String, dynamic> group,
+        required List<Map<String, dynamic>> members,
+        required String currentUserId,
+        required bool isSimplifyOn,
+      }) {
+    return NavigationService.push(
+      context,
+      GroupTransactionsScreen(
+        group: group,
+        members: members,
+        currentUserId: currentUserId,
+        isSimplifyOn: isSimplifyOn,
+      ),
     );
   }
 

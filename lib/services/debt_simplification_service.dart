@@ -20,7 +20,7 @@ class DebtSimplificationService{
   final GroupService groupService = GroupService();
   final ExpenseService expenseService = ExpenseService();
 
-  Future<List<Debt>> simplify(String groupId, {List<Map<String, dynamic>>? members, List<Map<String, dynamic>>? expenses}) async {
+  Future<List<Debt>> simplify(String groupId, {List<Map<String, dynamic>>? members, List<Map<String, dynamic>>? expenses, bool onlyCurrentUser = true,}) async {
     try{
       final resolvedMembers = members ?? await groupService.getGroupMembers(groupId);
       final resolvedExpenses = expenses ?? await expenseService.getGroupExpenses(groupId);
@@ -74,8 +74,10 @@ class DebtSimplificationService{
         balances.removeWhere((userId, balance) => balance.abs() < 0.0);
       }
 
-      String currentUserId = supabase.auth.currentUser!.id;
-      simplified.removeWhere((s) => s.debtorId.compareTo(currentUserId) != 0 && s.creditorId.compareTo(currentUserId) != 0);
+      if (onlyCurrentUser) {
+        String currentUserId = supabase.auth.currentUser!.id;
+        simplified.removeWhere((s) => s.debtorId.compareTo(currentUserId) != 0 && s.creditorId.compareTo(currentUserId) != 0);
+      }
 
       return simplified;
     } catch (error) {

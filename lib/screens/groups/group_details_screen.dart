@@ -16,7 +16,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final GroupService _groupService = GroupService();
   final ExpenseService _expenseService = ExpenseService();
   final DebtSimplificationService _debtSimplificationService =
-      DebtSimplificationService();
+  DebtSimplificationService();
 
   final String currentUserId = Supabase.instance.client.auth.currentUser!.id;
 
@@ -305,7 +305,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     );
                   })
               else
-                // ORIGINAL BALANCES
+              // ORIGINAL BALANCES
                 ...currentBalances.map((b){
                   final netAmount = (b['net_amount'] as num?)?.toDouble() ?? 0.0;
                   final theyOweYou = netAmount > 0;
@@ -468,6 +468,16 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     );
   }
 
+  Future<void> _goToTransactionsScreen() async {
+    await AppRouter.toGroupTransactions(
+      context,
+      group: widget.group,
+      members: members,
+      currentUserId: currentUserId,
+      isSimplifyOn: _isSimplifyOn,
+    );
+  }
+
   Future<void> _goToMembersScreen() async {
     final result = await AppRouter.toGroupMembers(context, group: widget.group, currentUserId: currentUserId);
     if (result == true) {
@@ -490,27 +500,27 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       floatingActionButton: isLoading
           ? null
           : Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                FloatingActionButton.extended(
-                  heroTag: 'settle_up_fab',
-                  onPressed: _goToSettleUp,
-                  backgroundColor: const Color(0xFF5277FF),
-                  foregroundColor: Colors.white,
-                  label: const Text("Settle Up", style: TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                const SizedBox(height: 12),
-                FloatingActionButton.extended(
-                  heroTag: 'add_expense_fab',
-                  onPressed: _goToAddExpense,
-                  backgroundColor: const Color(0xFFFF6452),
-                  foregroundColor: Colors.white,
-                  icon: const Icon(Icons.add),
-                  label: const Text("Add Expense", style: TextStyle(fontWeight: FontWeight.w600)),
-                ),
-              ],
-            ),
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'settle_up_fab',
+            onPressed: _goToSettleUp,
+            backgroundColor: const Color(0xFF5277FF),
+            foregroundColor: Colors.white,
+            label: const Text("Settle Up", style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'add_expense_fab',
+            onPressed: _goToAddExpense,
+            backgroundColor: const Color(0xFFFF6452),
+            foregroundColor: Colors.white,
+            icon: const Icon(Icons.add),
+            label: const Text("Add Expense", style: TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
       appBar: AppBar(
         backgroundColor: const Color(0xFFFAF8F3),
         elevation: 0,
@@ -534,176 +544,226 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       body: isLoading
           ? const Center(child: LoadingDots(color: Color(0xFFFF6452), size: 8, spacing: 8))
           : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.group['description'] != null &&
+                widget.group['description'].toString().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 4,
+                ),
+                child: Text(
+                  widget.group['description'],
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF5A6472),
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 20),
+
+            if (!isLoadingExpenses) _buildBalanceSummary(),
+
+            const SizedBox(height: 20),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  if (widget.group['description'] != null &&
-                      widget.group['description'].toString().isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 22,
-                        vertical: 4,
-                      ),
-                      child: Text(
-                        widget.group['description'],
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Color(0xFF5A6472),
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  if (!isLoadingExpenses) _buildBalanceSummary(),
-
-                  const SizedBox(height: 20),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: _goToMembersScreen,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFF17202B,).withValues(alpha: 0.3)),
-                            ),
-                            // View members button
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.people_outline, size: 16, color: Color(0xFF17202B)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  "${members.length} people",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF17202B),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: _goToMembersScreen,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF17202B).withValues(alpha: 0.3),
                             ),
                           ),
-                        ),
-
-                        // Simplify debts toggle
-                        if (isCreator)
-                          Row(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
-                                "Simplify Debts",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF5A6472),
-                                ),
+                              const Icon(
+                                Icons.people_outline,
+                                size: 16,
+                                color: Color(0xFF17202B),
                               ),
-
-                              const SizedBox(width: 8),
-
-                              if (_isSimplifying)
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 8),
-                                  child: LoadingDots(
-                                    color: Color(0xFF2F9E8F),
-                                    size: 5,
-                                    spacing: 4,
-                                  ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "${members.length} people",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF17202B),
+                                  fontSize: 13,
                                 ),
-
-                              Switch(
-                                value: _isSimplifyOn,
-                                onChanged: _isSimplifying ? null : _toggleSimplify,
-                                activeThumbColor: const Color(0xFF2F9E8F),
-                                inactiveThumbColor: const Color(0xFF9AA2AC),
-                                inactiveTrackColor: const Color(0xFFE4E0D5),
                               ),
                             ],
                           ),
-                      ],
-                    ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      GestureDetector(
+                        onTap: _goToTransactionsScreen,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF17202B).withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.receipt_long_outlined,
+                                size: 16,
+                                color: Color(0xFF17202B),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                "Transactions",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF17202B),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(height: 30),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 22),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  if (isCreator)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                          "ACTIVITY",
+                          "Simplify Debts",
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                             color: Color(0xFF5A6472),
                           ),
                         ),
-                        const SizedBox(height: 10),
 
-                        isLoadingExpenses
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 20),
-                                child: Center(
-                                  child: LoadingDots(
-                                    color: Color(0xFFFF6452),
-                                    size: 6,
-                                    spacing: 6,
-                                  ),
-                                ),
-                              )
-                            : expenses.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 10),
-                                child: Text(
-                                  "No expenses yet.",
-                                  style: TextStyle(color: Color(0xFF9AA2AC)),
-                                ),
-                              )
-                            : ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: expenses.length,
-                                itemBuilder: (context, index){
-                                  final expense = expenses[index];
-                                  final category = expense['category'] as String? ?? 'other';
-                                  final paidByUser = expense['users'] as Map<String, dynamic>?;
-                                  final amount = (expense['amount'] as num?)?.toDouble() ?? 0.0;
+                        const SizedBox(width: 8),
 
-                                  final isPaidByMe = paidByUser?['id'] == currentUserId;
-                                  final paidByLabel = isPaidByMe ? "me" : (paidByUser?['name'] ?? 'someone');
+                        if (_isSimplifying)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 8),
+                            child: LoadingDots(
+                              color: Color(0xFF2F9E8F),
+                              size: 5,
+                              spacing: 4,
+                            ),
+                          ),
 
-                                  final splits = List<Map<String, dynamic>>.from(expense['expense_splits'] ?? []);
-                                  final otherSplits = splits.where((s) => s['user_id'] != expense['paid_by']);
-                                  final isExpenseSettled = otherSplits.isNotEmpty && otherSplits.every((s) => s['is_settled'] == true);
-
-                                  return ActivityRow(
-                                    icon: _categoryEmoji[category] ?? '💸',
-                                    iconColor: _categoryColor[category] ?? const Color(0xFF9AA2AC),
-                                    title: expense['description'] ?? '',
-                                    subtitle: "Paid by $paidByLabel${isExpenseSettled ? ' · Settled' : ''}",
-                                    amount: "₹${amount.toStringAsFixed(2)}",
-                                    onTap: () => _goToExpenseDetails(expense),
-                                  );
-                                },
-                              ),
+                        Switch(
+                          value: _isSimplifyOn,
+                          onChanged: _isSimplifying ? null : _toggleSimplify,
+                          activeThumbColor: const Color(0xFF2F9E8F),
+                          inactiveThumbColor: const Color(0xFF9AA2AC),
+                          inactiveTrackColor: const Color(0xFFE4E0D5),
+                        ),
                       ],
                     ),
+                ],
+              )
+            ),
+
+            const SizedBox(height: 30),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "ACTIVITY",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                      color: Color(0xFF5A6472),
+                    ),
                   ),
-                  const SizedBox(height: 90),
+                  const SizedBox(height: 10),
+
+                  isLoadingExpenses
+                      ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: LoadingDots(
+                        color: Color(0xFFFF6452),
+                        size: 6,
+                        spacing: 6,
+                      ),
+                    ),
+                  )
+                      : expenses.isEmpty
+                      ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                      "No expenses yet.",
+                      style: TextStyle(color: Color(0xFF9AA2AC)),
+                    ),
+                  )
+                      : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: expenses.length,
+                    itemBuilder: (context, index){
+                      final expense = expenses[index];
+                      final category = expense['category'] as String? ?? 'other';
+                      final paidByUser = expense['users'] as Map<String, dynamic>?;
+                      final amount = (expense['amount'] as num?)?.toDouble() ?? 0.0;
+
+                      final isPaidByMe = paidByUser?['id'] == currentUserId;
+                      final paidByLabel = isPaidByMe ? "me" : (paidByUser?['name'] ?? 'someone');
+
+                      final splits = List<Map<String, dynamic>>.from(expense['expense_splits'] ?? []);
+                      final otherSplits = splits.where((s) => s['user_id'] != expense['paid_by']);
+                      final isExpenseSettled = otherSplits.isNotEmpty && otherSplits.every((s) => s['is_settled'] == true);
+
+                      return ActivityRow(
+                        icon: _categoryEmoji[category] ?? '💸',
+                        iconColor: _categoryColor[category] ?? const Color(0xFF9AA2AC),
+                        title: expense['description'] ?? '',
+                        subtitle: "Paid by $paidByLabel${isExpenseSettled ? ' · Settled' : ''}",
+                        amount: "₹${amount.toStringAsFixed(2)}",
+                        onTap: () => _goToExpenseDetails(expense),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
+            const SizedBox(height: 90),
+          ],
+        ),
+      ),
     );
   }
 }

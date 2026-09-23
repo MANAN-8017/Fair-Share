@@ -183,6 +183,67 @@ class ExpenseService {
         .toList();
   }
 
+  List<Map<String, dynamic>> computeAllPairwiseBalances({
+    required List<Map<String, dynamic>> expenses,
+    required List<Map<String, dynamic>> members,
+  }) {
+    final nameById = <String, String>{};
+    for (final member in members) {
+      final user = member['users'] as Map<String, dynamic>?;
+      if (user == null) continue;
+      nameById[user['id'].toString()] = user['name']?.toString() ?? 'Unknown';
+    }
+
+    // key = "smallerId|largerId" (alphabetically sorted so each pair has one
+    // slot). Positive value => first id owes second id. Negative => reverse.
+    final Map<String, double> net = {};
+
+    for (final expense in expenses) {
+      final paidBy = expense['paid_by'] as String?;
+      if (paidBy == null) continue;
+
+      final splits = List<Map<String, dynamic>>.from(
+        expense['expense_splits'] ?? [],
+      );
+
+      for (final split in splits) {
+        if (split['is_settled'] == true) continue;
+
+        final splitUser = split['user_id'] as String?;
+        final amount = (split['amount'] as num?)?.toDouble() ?? 0.0;
+        if (splitUser == null || splitUser == paidBy || amount == 0) continue;
+
+        // splitUser owes paidBy `amount`
+        final ids = [splitUser, paidBy]..sort();
+        final key = "${ids[0]}|${ids[1]}";
+        final sign = splitUser == ids[0] ? 1.0 : -1.0;
+
+        net[key] = (net[key] ?? 0) + sign * amount;
+      }
+    }
+
+    final result = <Map<String, dynamic>>[];
+    net.forEach((key, value) {
+      if (value.abs() < 0.005) return;
+
+      final parts = key.split('|');
+      final String debtorId = value > 0 ? parts[0] : parts[1];
+      final String creditorId = value > 0 ? parts[1] : parts[0];
+
+      result.add({
+        'debtor_id': debtorId,
+        'creditor_id': creditorId,
+        'debtor_name': nameById[debtorId] ?? 'Unknown',
+        'creditor_name': nameById[creditorId] ?? 'Unknown',
+        'amount': value.abs(),
+      });
+    });
+
+    result.sort(
+          (a, b) => (b['amount'] as double).compareTo(a['amount'] as double),
+    );
+    return result;
+  }
   Future<double> calculateUserBalanceInGroup(String groupId, String userId) async {
     final expenses = await getGroupExpenses(groupId);
     double netBalance = 0.0;
