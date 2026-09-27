@@ -1,15 +1,27 @@
 import 'package:flutter/material.dart';
-import '../screens/groups/group_transactions_screen.dart';
+
+import '../services/navigation_service.dart';
+
+import '../screens/layout.dart';
 import '../screens/auth/auth.dart';
-import '../screens/expenses/settle_up_screen.dart';
+
 import '../screens/groups/group_screen.dart';
+import '../screens/groups/group_members_screen.dart';
 import '../screens/groups/create_group_screen.dart';
 import '../screens/groups/group_details_screen.dart';
-import '../services/navigation_service.dart';
-import '../screens/layout.dart';
+import '../screens/groups/group_transactions_screen.dart';
+
+import '../screens/expenses/settle_up_screen.dart';
 import '../screens/expenses/add_expense_screen.dart';
 import '../screens/expenses/expense_details_screen.dart';
-import '../screens/groups/group_members_screen.dart';
+
+// Account Screens
+import '../screens/account/account_screen.dart';
+import '../screens/account/edit_profile_screen.dart';
+import '../screens/account/notifications_screen.dart';
+import '../screens/account/payment_details_screen.dart';
+import '../screens/account/help_support_screen.dart';
+import '../screens/account/about_screen.dart';
 
 class AppRouter {
 
@@ -29,12 +41,12 @@ class AppRouter {
     return NavigationService.replace(context, const RegisterScreen(), delay: delay);
   }
 
-  static Future<void> toLayout(BuildContext context, {int delay = 0}) {
-    return NavigationService.clearAndNavigate(context, const Layout(), delay: delay);
+  static Future<void> toLayout(BuildContext context, int initialIndex, {int delay = 0}) {
+    return NavigationService.clearAndNavigate(context, Layout(initialIndex: initialIndex), delay: delay);
   }
 
   static Future<void> toHome(BuildContext context, { int delay = 0 }) {
-    return NavigationService.clearAndNavigate(context,const Layout(), delay: delay);
+    return NavigationService.clearAndNavigate(context,const Layout(initialIndex: 0), delay: delay);
   }
 
   static Future<dynamic> toGroups(BuildContext context, { int delay = 0 }) {
@@ -98,4 +110,29 @@ class AppRouter {
   }) {
     return NavigationService.push(context, SettleUpScreen(group: group, members: members));
   }
+
+  static Future<void> toEditProfile(BuildContext context, { int delay = 0 }) {
+    return NavigationService.push(context, const EditProfileScreen());
+  }
+
+  static Future<void> toNotificationSettings(BuildContext context, { int delay = 0 }) {
+    return NavigationService.push(context, const NotificationsScreen());
+  }
+
+  static Future<void> toPaymentDetails(BuildContext context, { int delay = 0 }) {
+    return NavigationService.push(context, const PaymentDetailsScreen());
+  }
+
+  static Future<void> toHelpSupport(BuildContext context, { int delay = 0 }) {
+    return NavigationService.push(context, const HelpSupportScreen());
+  }
+
+  static Future<void> toAbout(BuildContext context, { int delay = 0 }) {
+    return NavigationService.push(context, const AboutScreen());
+  }
+
+  static Future<void> toAccount(BuildContext context, { required bool setting }) {
+    return NavigationService.push(context, const AccountScreen());
+  }
+
 }

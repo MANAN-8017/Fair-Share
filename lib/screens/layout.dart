@@ -6,14 +6,21 @@ import 'activity/activity_screen.dart';
 import 'account/account_screen.dart';
 
 class Layout extends StatefulWidget {
-  const Layout({super.key});
+  final int initialIndex;
+  const Layout({super.key, required this.initialIndex});
 
   @override
   State<Layout> createState() => _LayoutState();
 }
 
-class _LayoutState extends State<Layout> {
-  int selected = 0;
+ class _LayoutState extends State<Layout> {
+  late int selected = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    selected = widget.initialIndex;
+  }
 
   void selectScreen(int index) {
     setState(() {

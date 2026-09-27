@@ -4,3 +4,4 @@ export 'expense_service.dart';
 export 'group_service.dart';
 export 'navigation_service.dart';
 export 'validation_services.dart';
+export 'account_service.dart';
