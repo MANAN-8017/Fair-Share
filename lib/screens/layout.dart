@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-
 import '../widgets/widgets.dart';
 import 'home_screen.dart';
 import 'groups/group_screen.dart';
 import 'activity/activity_screen.dart';
+import 'account/account_screen.dart';
 
 class Layout extends StatefulWidget {
   const Layout({super.key});
@@ -33,7 +33,7 @@ class _LayoutState extends State<Layout> {
           HomeScreen(),
           GroupScreen(),
           ActivityScreen(),
-          Center(child: Text("Account")),
+          AccountScreen(),
         ],
       ),
 

@@ -79,7 +79,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                         emailController.text.trim(),
                       );
 
-                      if (!mounted) return;
+                      if (!context.mounted) return;
                       Navigator.pop(context);
 
                       if (result == "True") {
@@ -138,11 +138,8 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   @override
   Widget build(BuildContext context) {
     // WillPopScope ensures we pass `changesMade` back even if the user uses the physical back button
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, changesMade);
-        return false;
-      },
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         backgroundColor: const Color(0xFFFAF8F3),
         appBar: AppBar(

@@ -71,7 +71,6 @@ class ExpenseService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      print("Error fetching expenses: $error");
       return [];
     }
   }
@@ -160,8 +159,9 @@ class ExpenseService {
         expense['expense_splits'] ?? [],
       );
       for (final split in splits) {
-        if (split['is_settled'] == true)
+        if (split['is_settled'] == true) {
           continue; // skip fully — no credit, no debit
+        }
         final userId = split['user_id'] as String?;
         if (userId == null) continue;
         final amount = (split['amount'] as num?)?.toDouble() ?? 0.0;
@@ -312,7 +312,6 @@ class ExpenseService {
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      print("Error fetching recent activity: $error");
       return [];
     }
   }

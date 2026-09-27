@@ -114,9 +114,9 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
                             final members = await _groupService.getGroupMembers(expense['group_id']);
 
-                            if (!mounted) return;
+                            if (!context.mounted) return;
 
-                            await AppRouter.toExpenseDetails(
+                            AppRouter.toExpenseDetails(
                               context,
                               expense: expense,
                               members: members,

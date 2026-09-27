@@ -7,12 +7,19 @@ Future<void> main() async {
   try {
     await Supabase.initialize(
       url: 'https://ufyqhxgfvxfyqgifednn.supabase.co',
-      anonKey: 'sb_publishable_-Z7aiYb9fabdcweG_dRhrw_6lDPh39Q',
+      publishableKey: 'sb_publishable_-Z7aiYb9fabdcweG_dRhrw_6lDPh39Q',
     );
     runApp(const FairShareApp());
   }
   catch(error){
-    print("Error: $error");
+    runApp(MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: Center(
+          child: Text('Error initializing Supabase: $error'),
+        ),
+      ),
+    ));
   }
 }
 

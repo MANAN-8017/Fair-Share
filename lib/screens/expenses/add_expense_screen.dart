@@ -196,26 +196,32 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
             // Split type
             const Text("Split", style: TextStyle(fontWeight: FontWeight.w600)),
-            RadioListTile<String>(
-              contentPadding: EdgeInsets.zero,
-              title: const Text("Equally"),
-              value: 'equal',
+            RadioGroup<String>(
               groupValue: splitType,
-              onChanged: (value) => setState(() => splitType = value!),
-            ),
-            RadioListTile<String>(
-              contentPadding: EdgeInsets.zero,
-              title: const Text("Unequally (₹ amounts)"),
-              value: 'unequal',
-              groupValue: splitType,
-              onChanged: (value) => setState(() => splitType = value!),
-            ),
-            RadioListTile<String>(
-              contentPadding: EdgeInsets.zero,
-              title: const Text("By percentage (%)"),
-              value: 'percent',
-              groupValue: splitType,
-              onChanged: (value) => setState(() => splitType = value!),
+              onChanged: (value) {
+                setState(() {
+                  splitType = value!;
+                });
+              },
+              child: Column(
+                children: [
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Equally"),
+                    value: 'equal',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Unequally (₹ amounts)"),
+                    value: 'unequal',
+                  ),
+                  RadioListTile<String>(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("By percentage (%)"),
+                    value: 'percent',
+                  ),
+                ],
+              ),
             ),
 
             if (splitType == 'equal' && widget.members.isNotEmpty && _amount > 0)

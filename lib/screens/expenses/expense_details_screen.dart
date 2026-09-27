@@ -42,13 +42,6 @@ class ExpenseDetailsScreen extends StatelessWidget {
     final category = expense['category'] as String? ?? 'other';
     final color = _categoryColor[category] ?? const Color(0xFF9AA2AC);
 
-    final totalAmount = (expense['amount'] as num).toDouble();
-    final mySplit = splits.firstWhere(
-          (s) => s['user_id'] == currentUserId,
-      orElse: () => {},
-    );
-    final myShare = mySplit.isNotEmpty ? (mySplit['amount'] as num).toDouble() : 0.0;
-
     return Scaffold(
       backgroundColor: const Color(0xFFFAF8F3),
       appBar: AppBar(

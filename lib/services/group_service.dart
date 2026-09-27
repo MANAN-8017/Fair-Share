@@ -52,7 +52,6 @@ class GroupService{
       return List<Map<String, dynamic>>.from(response);
     }
     catch (error) {
-      print("Error fetching groups: $error");
       return [];
     }
   }
@@ -67,7 +66,6 @@ class GroupService{
 
       return List<Map<String, dynamic>>.from(response);
     } catch (error) {
-      print("Error fetching members: $error");
       return [];
     }
   }
