@@ -19,6 +19,7 @@ class ExpenseDetailsScreen extends StatelessWidget {
     'travel': '🚗',
     'rent': '🏠',
     'utility': '💡',
+    'other': '💸',
   };
 
   static const Map<String, Color> _categoryColor = {
@@ -26,6 +27,7 @@ class ExpenseDetailsScreen extends StatelessWidget {
     'travel': Color(0xFFFF6452),
     'rent': Color(0xFFC98A2C),
     'utility': Color(0xFF6C63A6),
+    'other': Color(0xFF5A6472),
   };
 
   String _nameForUserId(String userId) {
