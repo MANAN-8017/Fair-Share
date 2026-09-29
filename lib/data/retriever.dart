@@ -31,7 +31,7 @@ class Retriever {
 
       return data['name'] as String?;
     } catch (error) {
-      return error.toString();
+      return null;
     }
   }
 }

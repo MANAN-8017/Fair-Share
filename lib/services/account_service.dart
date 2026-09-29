@@ -12,6 +12,7 @@ class AccountService {
   }
 
   static final ValueNotifier<String?> currentAvatarUrl = ValueNotifier<String?>(null);
+  static final ValueNotifier<int> profileVersion = ValueNotifier<int>(0);
 
   Future<Map<String, dynamic>?> getProfile() async {
     final user = supabase.auth.currentUser;
@@ -25,10 +26,17 @@ class AccountService {
     return data;
   }
 
-  Future<String?> updateProfile({required String name}){
-    final user = supabase.auth.currentUser;
-    if(user == null) return Future.value("You must be logged in to update profile.");
-    return supabase.from('users').update({'name': name}).eq('id', user.id).then((value) => "True").catchError((error) => error.toString());
+  Future<String?> updateProfileName({required String name}) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return "You must be logged in to update profile.";
+
+      await supabase.from('users').update({'name': name}).eq('id', user.id);
+      profileVersion.value++;
+      return "True";
+    } catch (error) {
+      return error.toString();
+    }
   }
 
   Future<String?> updateEmail({required String newEmail, required String currentPassword}) async {
@@ -111,5 +119,5 @@ class AccountService {
 
   Future<String?> submitSupportRequest({required String subject, required String message}){return Future.value("True");}
 
-  Future<String> getAppVersion(){return Future.value("1.0.0");}
+  Future<String> getAppVersion(){return Future.value("2.1.3");}
 }

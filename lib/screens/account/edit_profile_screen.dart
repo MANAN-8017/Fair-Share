@@ -171,13 +171,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       profileErrorText = null;
     });
 
-    final result = await accountService.updateProfile(name: _nameController.text.trim());
+    final result = await accountService.updateProfileName(name: _nameController.text.trim());
 
     if (!mounted) return;
 
     if (result == "True") {
       setState(() => isSavingProfile = false);
-      AppSnackBar.success(context, "Profile updated.");
+      AppSnackBar.success(context, "Profile name updated.");
     } else {
       setState(() {
         isSavingProfile = false;

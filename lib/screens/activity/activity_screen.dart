@@ -24,6 +24,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     'travel': '🚗',
     'rent': '🏠',
     'utility': '💡',
+    'other': '💸',
   };
 
   static const Map<String, Color> _categoryColor = {
@@ -31,12 +32,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
     'travel': Color(0xFFFF6452),
     'rent': Color(0xFFC98A2C),
     'utility': Color(0xFF6C63A6),
+    'other': Color(0xFF5A6472),
   };
 
   @override
   void initState() {
     super.initState();
+    AccountService.profileVersion.addListener(_loadActivity);
     _loadActivity();
+  }
+
+  @override
+  void dispose() {
+    AccountService.profileVersion.removeListener(_loadActivity);
+    super.dispose();
   }
 
   Future<void> _loadActivity() async {

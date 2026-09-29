@@ -24,7 +24,14 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
+    AccountService.profileVersion.addListener(_loadProfile);
     _loadProfile();
+  }
+
+  @override
+  void dispose() {
+    AccountService.profileVersion.removeListener(_loadProfile);
+    super.dispose();
   }
 
   Future<void> _loadProfile() async {

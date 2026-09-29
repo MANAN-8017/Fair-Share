@@ -28,6 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    AccountService.profileVersion.addListener(loadUser);
     setGreeting();
     loadUser();
     loadGroups();
@@ -37,6 +38,12 @@ class _HomeScreenState extends State<HomeScreen> {
         AppSnackBar.success(context, widget.successMessage!);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    AccountService.profileVersion.removeListener(loadUser);
+    super.dispose();
   }
 
   Future<void> loadGroups() async {
