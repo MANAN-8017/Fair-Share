@@ -5,3 +5,4 @@ export 'loading_dots.dart';
 export 'nav_item.dart';
 export 'fairshare_logo.dart';
 export 'app_snackbar.dart';
+export 'user_avatar.dart';

@@ -130,7 +130,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (picked == null) return;
 
     setState(() => isUploadingAvatar = true);
-    final result = await accountService.uploadAvatar(File(picked.path));
+    final bytes = await picked.readAsBytes();
+    final result = await accountService.uploadAvatar(bytes);
     if (!mounted) return;
 
     setState(() {
@@ -140,6 +141,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (result == null) {
       AppSnackBar.error(context, "Couldn't upload photo. Please try again.");
+    } else {
+      AppSnackBar.success(context, "Profile Picture Updated!");
     }
   }
 
@@ -192,10 +195,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    // if (_emailController.text.trim() == _originalEmail) {
-    //   setState(() => emailErrorText = "That's already your current email.");
-    //   return;
-    // }
+    if (_emailController.text.trim() == _originalEmail) {
+      setState(() => emailErrorText = "That's already your current email.");
+      return;
+    }
 
     setState(() {
       isSavingEmail = true;

@@ -1,5 +1,5 @@
-import 'dart:io';
-
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AccountService {
@@ -11,10 +11,18 @@ class AccountService {
     return _instance;
   }
 
-  Future<Map<String, dynamic>?> getProfile(){
+  static final ValueNotifier<String?> currentAvatarUrl = ValueNotifier<String?>(null);
+
+  Future<Map<String, dynamic>?> getProfile() async {
     final user = supabase.auth.currentUser;
-    if(user == null) return Future.value(null);
-    return supabase.from('users').select('name, email').eq('id', user.id).maybeSingle();
+    if (user == null) return null;
+    final data = await supabase
+        .from('users')
+        .select('name, email, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+    currentAvatarUrl.value = data?['avatar_url'] as String?;
+    return data;
   }
 
   Future<String?> updateProfile({required String name}){
@@ -26,10 +34,21 @@ class AccountService {
   Future<String?> updateEmail({required String newEmail, required String currentPassword}) async {
     try {
       final user = supabase.auth.currentUser;
+      if (user == null) {
+        return "You must be logged in";
+      }
+
+      if (user.email == null || user.email!.isEmpty) {
+        return "User email is unavailable";
+      }
+
+      await supabase.auth.signInWithPassword(email: user.email!, password: currentPassword);
       await supabase.auth.updateUser(UserAttributes(email: newEmail));
-      return "Email updated!";
-    } catch(error){
-      return error.toString();
+      return "True";
+    } on AuthApiException catch (error) {
+      return error.message.toLowerCase();
+    } catch (error) {
+      return "Something went wrong. Please try again.";
     }
   }
 
@@ -39,9 +58,43 @@ class AccountService {
     return supabase.auth.updateUser(UserAttributes(password: newPassword)).then((value) => "True").catchError((error) => error.toString());
   }
 
-  Future<Object?> uploadAvatar(File file) async {return Future.value(null);}
+  Future<Object?> uploadAvatar(Uint8List bytes) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return null;
 
-  Future<Object?> removeAvatar() async {return Future.value(null);}
+      final path = '${user.id}/avatar.jpg';
+
+      await supabase.storage.from('avatars').uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(upsert: true, contentType: 'image/jpeg'),
+          );
+
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(path);
+      final url = '$publicUrl?v=${DateTime.now().millisecondsSinceEpoch}';
+
+      await supabase.from('users').update({'avatar_url': url}).eq('id', user.id);
+      currentAvatarUrl.value = url;
+      return url;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  Future<String?> removeAvatar() async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return "You must be logged in.";
+
+      await supabase.storage.from('avatars').remove(['${user.id}/avatar.jpg']);
+      await supabase.from('users').update({'avatar_url': null}).eq('id', user.id);
+      currentAvatarUrl.value = null;
+      return "True";
+    } catch (error) {
+      return error.toString();
+    }
+  }
 
   Future<Map<String, bool>?> getNotificationSettings(){return Future.value({});}
 

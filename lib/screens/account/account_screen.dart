@@ -30,6 +30,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _loadProfile() async {
     final userName = await retriever.getName();
     final currentUser = authService.supabase.auth.currentUser;
+    await accountService.getProfile();
 
     if (!mounted) return;
     setState(() {
@@ -90,31 +91,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             ),
                             child: Row(
                               children: [
-                                Container(
-                                  width: 56,
-                                  height: 56,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Color(0xFF3CB6A6),
-                                        Color(0xFF1B5C53),
-                                      ],
-                                    ),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      (name != null && name!.isNotEmpty)
-                                          ? name![0].toUpperCase()
-                                          : "?",
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                CurrentUserAvatar(name: name ?? "", size: 56),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(

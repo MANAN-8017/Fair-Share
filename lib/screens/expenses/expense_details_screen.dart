@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/widgets.dart';
+
 class ExpenseDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> expense;
   final List<Map<String, dynamic>> members;
@@ -33,6 +35,14 @@ class ExpenseDetailsScreen extends StatelessWidget {
       orElse: () => {'users': {'name': 'Unknown'}},
     );
     return (match['users'] as Map<String, dynamic>)['name'] ?? 'Unknown';
+  }
+
+  String? _avatarForUserId(String userId) {
+    for (final m in members) {
+      final u = m['users'] as Map<String, dynamic>;
+      if (u['id'] == userId) return u['avatar_url'] as String?;
+    }
+    return null;
   }
 
   @override
@@ -122,14 +132,15 @@ class ExpenseDetailsScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: color.withValues(alpha: 0.2),
-                      child: Text(
-                        _nameForUserId(userId).substring(0, 1).toUpperCase(),
-                        style: TextStyle(color: color, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    userId == currentUserId
+                      ? CurrentUserAvatar(name: _nameForUserId(userId), size: 36)
+                      : UserAvatar(
+                          imageUrl: _avatarForUserId(userId),
+                          name: _nameForUserId(userId),
+                          size: 36,
+                          backgroundColor: color.withValues(alpha: 0.2),
+                          textColor: color,
+                        ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(

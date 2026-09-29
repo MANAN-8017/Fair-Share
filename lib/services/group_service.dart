@@ -60,7 +60,7 @@ class GroupService{
     try {
       final response = await supabase
           .from('group_members')
-          .select('user_id, joined_at, users!inner (id, name, email)')
+          .select('user_id, joined_at, users!inner (id, name, email, avatar_url)')
           .eq('group_id', groupId)
           .order('joined_at', ascending: true);
 

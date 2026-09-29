@@ -66,38 +66,16 @@ class _GroupScreenState extends State<GroupScreen> {
                           color: Color(0xFF17202B),
                         ),
                       ),
-
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              Color(0xFF3CB6A6),
-                              Color(0xFF1B5C53),
-                            ],
-                          ),
-                        ),
-                        child: PopupMenuButton<String>(
-                          offset: const Offset(0, 2),
-                          position: PopupMenuPosition.under,
-                          onSelected: (value) {
-                            if (value == 'logout') {
-                              logout();
-                            }
-                          },
-                          itemBuilder: (context) => const [
-                            PopupMenuItem<String>(
-                              value: 'logout',
-                              child: Text("Logout"),
-                            ),
-                          ],
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                          ),
-                        ),
+                      PopupMenuButton<String>(
+                        offset: const Offset(0, 2),
+                        position: PopupMenuPosition.under,
+                        onSelected: (value) {
+                          if (value == 'logout') logout();
+                        },
+                        itemBuilder: (context) => const [
+                          PopupMenuItem<String>(value: 'logout', child: Text("Logout")),
+                        ],
+                        child: const CurrentUserAvatar(size: 42),
                       ),
                     ],
                   ),
