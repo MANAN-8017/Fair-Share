@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AccountService {
@@ -20,6 +22,26 @@ class AccountService {
     if(user == null) return Future.value("You must be logged in to update profile.");
     return supabase.from('users').update({'name': name}).eq('id', user.id).then((value) => "True").catchError((error) => error.toString());
   }
+
+  Future<String?> updateEmail({required String newEmail, required String currentPassword}) async {
+    try {
+      final user = supabase.auth.currentUser;
+      await supabase.auth.updateUser(UserAttributes(email: newEmail));
+      return "Email updated!";
+    } catch(error){
+      return error.toString();
+    }
+  }
+
+  Future<String?> updatePassword({required String currentPassword, required String newPassword}){
+    final user = supabase.auth.currentUser;
+    if(user == null) return Future.value("You must be logged in to update password.");
+    return supabase.auth.updateUser(UserAttributes(password: newPassword)).then((value) => "True").catchError((error) => error.toString());
+  }
+
+  Future<Object?> uploadAvatar(File file) async {return Future.value(null);}
+
+  Future<Object?> removeAvatar() async {return Future.value(null);}
 
   Future<Map<String, bool>?> getNotificationSettings(){return Future.value({});}
 

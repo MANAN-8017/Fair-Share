@@ -80,7 +80,7 @@ String? validateRegistration(String name, String email, String phoneNumber, Stri
   return ValidationService.validate(name, type: ValidationType.name) ??
       ValidationService.validate(email, type: ValidationType.email) ??
       ValidationService.validate(phoneNumber, type: ValidationType.phone) ??
-      ValidationService.validate(password, type: ValidationType.password, minLength: 8) ??
+      ValidationService.validate(password, type: ValidationType.password, minLength: 6) ??
       ValidationService.validate(confirmPassword, type: ValidationType.confirmPassword, compareValue: password);
 }
 
